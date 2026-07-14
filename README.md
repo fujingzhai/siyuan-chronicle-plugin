@@ -2,33 +2,37 @@
 
 [简体中文](./README_zh_CN.md) | English
 
-Calendars are good at planning what comes next. Chronicle is for remembering how time was actually lived.
+Chronicle is a SiYuan plugin for organizing activities by year, quarter, month, and week.
 
-Inspired by the traditional idea of recording life through the seasons, Chronicle unfolds a year across four scales—year, quarter, month, and week. Travel, reading, research, seasonal rituals, and everyday moments can each find their place in time, with native SiYuan notes available whenever a record needs more depth. It is not a to-do list, but a personal chronicle designed to grow over time and reward looking back.
+An activity may belong to an entire year, a quarter, a month, or a week while also recording the exact dates on which it occurred. For example, a trip can belong to Q3 2026 and carry an exact date range of July 12–18. Chronicle brings activities at different time scales into one annual panel for recording, ordering, and review, with native SiYuan notes available for anything that needs more detail.
 
-## Highlights
+## Features
 
-- See year, quarter, month, and week together in one timeline.
-- Record a title, time period, category, exact dates, and notes for each activity.
-- Reorder activities by dragging, or move them directly into another time period.
-- Click any time label to create or open its native SiYuan time note.
-- Link one or more existing notes to an activity, or create a new linked note.
-- Customize category names, order, and colors to shape your own system.
+- View year, quarter, month, and week together; browse all weeks in a scrollable sequence.
+- Move continuously between years with the arrow controls or keys, and press `T` to locate the current year, month, and week.
+- Store a title, category, time period, exact dates, note, and linked documents for each activity.
+- Display year and quarter activities one per row while keeping month and week activities compact. Column widths are draggable and remembered.
+- Reorder activities within a period or drag them into another period; their period and exact dates are adjusted accordingly.
+- Click any year, quarter, month, or week label to create or open its hierarchical time note.
+- Search and link multiple existing documents to an activity, or create and link a new note from the activity title.
+- Add, rename, recolor, reorder, and delete categories.
 
-## Working with SiYuan notes
+## Notes and notebooks
 
-Activities and notes remain independent. An activity works without a linked note; deleting a linked document only removes the link. Moving a linked document does not break the connection, and renamed documents are reflected automatically.
+On first use, Chronicle uses or creates a notebook named `岁时记`. The notebook is identified by its SiYuan notebook ID, so renaming it does not break Chronicle.
 
-Chronicle uses or creates a notebook named `岁时记` on first use. When the default notebook changes, only time notes and activity notes created by Chronicle are migrated. Existing documents linked from elsewhere are left where they are.
+Time notes follow a year → quarter → month → week hierarchy. Notes created from activities follow category → activity title. When the default notebook changes, Chronicle migrates only these plugin-managed notes; existing documents linked from elsewhere remain where they are.
+
+Activities and linked documents remain independent. Moving or renaming a document does not break its link. Deleting a linked document only removes the link, not the activity. When deleting an activity, you can choose whether its linked documents should also be deleted.
 
 ## Shortcuts
 
-- `T`: go to today
+- `T`: locate today
 - `N`: create an activity
 - `S`: open settings
 - `←` / `→`: change year
 
-Shortcuts are local to the Chronicle panel and stay disabled while typing or editing an activity.
+Shortcuts work only while the Chronicle panel is visible and no text field or dialog is being edited.
 
 ## Build
 
@@ -46,5 +50,5 @@ MIT
 
 This plugin was developed entirely through vibe coding:
 
-- Fable 5: approximately 30%
-- GPT 5.6 Sol: approximately 70%
+- Claude Code (Fable 5): approximately 30%
+- Codex (GPT 5.6 Sol): approximately 70%
