@@ -2,46 +2,49 @@
 
 [简体中文](./README_zh_CN.md) | English
 
-Chronicle is a quiet, time-first record panel for SiYuan. It lays out one year as four coordinated scales—year, quarter, month, and week—so that experiences can be placed in time without turning them into tasks, appointments, or database rows.
+Calendars are good at planning what comes next. Chronicle is for remembering how time was actually lived.
 
-The name is inspired by the traditional idea of recording life through the seasons. Chronicle is designed for looking back: the timeline remains primary, categories stay optional, and native SiYuan documents are linked only when an entry needs more context.
+Inspired by the traditional idea of recording life through the seasons, Chronicle unfolds a year across four scales—year, quarter, month, and week. Travel, reading, research, seasonal rituals, and everyday moments can each find their place in time, with native SiYuan notes available whenever a record needs more depth. It is not a to-do list, but a personal chronicle designed to grow over time and reward looking back.
 
 ## Highlights
 
-- One continuous timeline with year, quarter, month, and independently scrollable week columns.
-- Balanced default column ratio of `1 : 1 : 3 : 5`, with draggable dividers and remembered custom widths.
-- Activities at four time scales. Year and quarter entries use one row each; month and week entries flow compactly.
-- Manual drag sorting within a period, plus dragging to another period with the activity time adjusted automatically.
-- Optional category, exact date range, note, and one or more linked SiYuan documents.
-- Click any year, quarter, month, or week label to create or open its native time document.
-- Panel-local shortcuts: `T` goes to today, `N` creates an activity, `S` opens settings, and `←` / `→` changes year. They are disabled while typing or editing a dialog.
-- Theme-aware, low-noise interface with no separate category view and no global shortcut registration.
+- See year, quarter, month, and week together in one timeline.
+- Record a title, time period, category, exact dates, and notes for each activity.
+- Reorder activities by dragging, or move them directly into another time period.
+- Click any time label to create or open its native SiYuan time note.
+- Link one or more existing notes to an activity, or create a new linked note.
+- Customize category names, order, and colors to shape your own system.
 
-## Notes and notebooks
+## Working with SiYuan notes
 
-Chronicle keeps activities separate from documents. An activity can stand on its own or link to existing SiYuan documents.
+Activities and notes remain independent. An activity works without a linked note; deleting a linked document only removes the link. Moving a linked document does not break the connection, and renamed documents are reflected automatically.
 
-- Linked documents are tracked by their stable SiYuan block IDs. Moving a document does not break the link.
-- Renaming a linked document refreshes the title shown in Chronicle.
-- Deleting a linked document removes only that link; the activity remains.
-- Time documents are resolved by their canonical timeline path. If one is deleted, its icon disappears and clicking the time label creates it again.
-- On first use, Chronicle uses or creates a notebook named `岁时记`.
-- Changing the default notebook migrates only time documents and activity notes created and marked by Chronicle. Existing documents linked from elsewhere are never moved.
+Chronicle uses or creates a notebook named `岁时记` on first use. When the default notebook changes, only time notes and activity notes created by Chronicle are migrated. Existing documents linked from elsewhere are left where they are.
 
-## Data safety
+## Shortcuts
 
-Activity data is stored as JSON in the SiYuan workspace under the plugin data directory. Writes are serialized, and the previous good snapshot is kept as `chronicle.backup.json`. SiYuan documents remain native documents in the selected notebook and continue to participate in SiYuan sync, search, history, and snapshots.
+- `T`: go to today
+- `N`: create an activity
+- `S`: open settings
+- `←` / `→`: change year
+
+Shortcuts are local to the Chronicle panel and stay disabled while typing or editing an activity.
 
 ## Build
 
 ```bash
 pnpm install
-pnpm build          # build dist/ and package.zip
-pnpm make-install   # build and install to ~/SiYuan/data/plugins/siyuan-chronicle-plugin
+pnpm build
+pnpm make-install
 ```
-
-The SiYuan marketplace names are **Chronicle** and **岁时记**. The repository and package identifier are `siyuan-chronicle-plugin`.
 
 ## License
 
 MIT
+
+## Statement
+
+This plugin was developed entirely through vibe coding:
+
+- Fable 5: approximately 30%
+- GPT 5.6 Sol: approximately 70%
