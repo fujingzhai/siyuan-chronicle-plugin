@@ -2,28 +2,23 @@
 
 [简体中文](./README_zh_CN.md) | English
 
-Chronicle is a SiYuan plugin for organizing activities by year, quarter, month, and week.
+Chronicle is a record panel organized around time and categories, with links to native SiYuan notes.
 
-An activity may belong to an entire year, a quarter, a month, or a week while also recording the exact dates on which it occurred. For example, a trip can belong to Q3 2026 and carry an exact date range of July 12–18. Chronicle brings activities at different time scales into one annual panel for recording, ordering, and review, with native SiYuan notes available for anything that needs more detail.
+Unlike calendars and to-do lists, Chronicle is not centered on reminders, scheduling, or completion status. It places activities in the context of years, quarters, months, and weeks, then connects them through categories and notes to form a personal record that can grow over time and remain easy to revisit.
 
 ## Features
 
-- View year, quarter, month, and week together; browse all weeks in a scrollable sequence.
-- Move continuously between years with the arrow controls or keys, and press `T` to locate the current year, month, and week.
-- Store a title, category, time period, exact dates, note, and linked documents for each activity.
-- Display year and quarter activities one per row while keeping month and week activities compact. Column widths are draggable and remembered.
-- Reorder activities within a period or drag them into another period; their period and exact dates are adjusted accordingly.
-- Click any year, quarter, month, or week label to create or open its hierarchical time note.
-- Search and link multiple existing documents to an activity, or create and link a new note from the activity title.
-- Add, rename, recolor, reorder, and delete categories.
+- View year, quarter, month, and week in one annual panel, move continuously between years, or locate today.
+- Record an activity's title, category, time period, exact dates, and note.
+- Reorder activities by dragging or move them into another time period.
+- Create notes from time nodes and link one or more existing notes to an activity.
+- Customize categories and the default notebook to build your own record system.
 
 ## Notes and notebooks
 
-On first use, Chronicle uses or creates a notebook named `岁时记`. The notebook is identified by its SiYuan notebook ID, so renaming it does not break Chronicle.
+On first use, Chronicle uses or creates a notebook named `岁时记`. Notebooks and linked documents are associated by their SiYuan IDs, so moving or renaming them does not break the connection.
 
-Time notes follow a year → quarter → month → week hierarchy. Notes created from activities follow category → activity title. When the default notebook changes, Chronicle migrates only these plugin-managed notes; existing documents linked from elsewhere remain where they are.
-
-Activities and linked documents remain independent. Moving or renaming a document does not break its link. Deleting a linked document only removes the link, not the activity. When deleting an activity, you can choose whether its linked documents should also be deleted.
+When the default notebook changes, Chronicle migrates only notes it created and leaves existing documents linked from elsewhere in place. Activities and notes remain independent: deleting a note does not delete its activity, while deleting an activity lets you choose whether its linked notes should also be removed.
 
 ## Shortcuts
 

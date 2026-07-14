@@ -19,8 +19,8 @@
     "zh_CN": "岁时记"
   },
   "description": {
-    "default": "A quiet, time-first chronicle for recording life by year, quarter, month, and week, with optional links to native SiYuan notes.",
-    "zh_CN": "以年、季、月、周为经纬的低干扰岁时记录面板，可选绑定思源原生笔记。"
+    "default": "A record panel organized around time and categories, with links to native SiYuan notes.",
+    "zh_CN": "以时间和类目为经纬的记录面板，可关联思源原生笔记。"
   },
   "readme": {
     "default": "README.md",
