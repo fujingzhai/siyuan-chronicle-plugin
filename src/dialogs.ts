@@ -333,7 +333,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
 
   // ---- 动作 ----
   $("cancel").addEventListener("click", () => dialog.destroy());
-  $("save").addEventListener("click", () => {
+  const saveEntry = () => {
     const title = titleInput.value.trim();
     if (!title) {
       showMessage("标题不能为空", 4000, "info");
@@ -369,6 +369,16 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
     }
     store.upsertEntry(work);
     dialog.destroy();
+  };
+  $("save").addEventListener("click", saveEntry);
+  dialog.element.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing || event.repeat || event.keyCode === 229) return;
+    if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("textarea, select, button, a, [contenteditable=true], [data-role='doc-search'], .el-doc-results")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    saveEntry();
   });
   if (!isNew) {
     $("delete").addEventListener("click", () => {
