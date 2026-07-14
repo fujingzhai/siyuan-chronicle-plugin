@@ -429,7 +429,112 @@ function mountCategoryEditor(ctx: Ctx, root: HTMLElement): void {
   const { store } = ctx;
   const listBox = root.querySelector('[data-role="cat-list"]') as HTMLElement;
   const nameInput = root.querySelector('[data-role="new-name"]') as HTMLInputElement;
-  let draggedRow: HTMLElement | null = null;
+  listBox.classList.add("el-cat-list");
+
+  interface CategoryDragState {
+    row: HTMLElement;
+    placeholder: HTMLElement | null;
+    startX: number;
+    startY: number;
+    offsetY: number;
+    left: number;
+    width: number;
+    started: boolean;
+    originNext: ChildNode | null;
+  }
+
+  let dragState: CategoryDragState | null = null;
+
+  const resetFloatingRow = (row: HTMLElement) => {
+    row.classList.remove("el-cat-row--drag-source");
+    row.style.removeProperty("left");
+    row.style.removeProperty("top");
+    row.style.removeProperty("width");
+  };
+
+  const finishDrag = (commit: boolean) => {
+    const state = dragState;
+    if (!state) return;
+    document.removeEventListener("mousemove", onDragMove, true);
+    document.removeEventListener("mouseup", onDragUp, true);
+    window.removeEventListener("blur", onDragCancel);
+    document.body.classList.remove("el-cat-sort-active");
+
+    if (state.started && state.placeholder) {
+      if (commit) {
+        listBox.insertBefore(state.row, state.placeholder);
+      } else if (state.originNext?.parentNode === listBox) {
+        listBox.insertBefore(state.row, state.originNext);
+      } else {
+        listBox.appendChild(state.row);
+      }
+      state.placeholder.remove();
+      resetFloatingRow(state.row);
+      if (commit) {
+        const orderedIds = Array.from(listBox.querySelectorAll<HTMLElement>(".el-cat-row"))
+          .map((row) => row.dataset.categoryId)
+          .filter((id): id is string => !!id);
+        store.reorderCategories(orderedIds);
+      }
+    }
+    dragState = null;
+  };
+
+  const movePlaceholder = (clientY: number) => {
+    const state = dragState;
+    if (!state?.placeholder) return;
+    const hit = document.elementFromPoint(state.left + state.width / 2, clientY) as HTMLElement | null;
+    const target = hit?.closest<HTMLElement>(".el-cat-row");
+    if (target && target !== state.row && target.parentElement === listBox) {
+      const rect = target.getBoundingClientRect();
+      const before = clientY < rect.top + rect.height / 2 ? target : target.nextSibling;
+      if (before !== state.placeholder) listBox.insertBefore(state.placeholder, before);
+      return;
+    }
+    const listRect = listBox.getBoundingClientRect();
+    if (clientY >= listRect.top && clientY <= listRect.bottom + 18) {
+      const rows = Array.from(listBox.querySelectorAll<HTMLElement>(".el-cat-row"))
+        .filter((row) => row !== state.row);
+      if (!rows.length || clientY > rows[rows.length - 1].getBoundingClientRect().bottom) {
+        listBox.appendChild(state.placeholder);
+      }
+    }
+  };
+
+  function onDragMove(event: MouseEvent) {
+    const state = dragState;
+    if (!state) return;
+    if (!state.started) {
+      if (Math.hypot(event.clientX - state.startX, event.clientY - state.startY) < 4) return;
+      const rect = state.row.getBoundingClientRect();
+      const placeholder = document.createElement("div");
+      placeholder.className = "el-cat-row-drop-placeholder";
+      placeholder.style.height = `${Math.ceil(rect.height)}px`;
+      listBox.insertBefore(placeholder, state.row);
+      state.placeholder = placeholder;
+      state.offsetY = state.startY - rect.top;
+      state.left = rect.left;
+      state.width = rect.width;
+      state.started = true;
+      state.row.style.left = `${rect.left}px`;
+      state.row.style.top = `${rect.top}px`;
+      state.row.style.width = `${rect.width}px`;
+      state.row.classList.add("el-cat-row--drag-source");
+      document.body.classList.add("el-cat-sort-active");
+    }
+    event.preventDefault();
+    state.row.style.top = `${event.clientY - state.offsetY}px`;
+    movePlaceholder(event.clientY);
+  }
+
+  function onDragUp(event: MouseEvent) {
+    if (dragState?.started) event.preventDefault();
+    finishDrag(true);
+  }
+
+  function onDragCancel() {
+    finishDrag(false);
+  }
 
   const render = () => {
     listBox.innerHTML = "";
@@ -438,7 +543,7 @@ function mountCategoryEditor(ctx: Ctx, root: HTMLElement): void {
       row.className = "el-cat-row";
       row.dataset.categoryId = cat.id;
       row.innerHTML = `
-        <span class="el-cat-row__handle" draggable="true" title="拖动排序">⠿</span>
+        <span class="el-cat-row__handle" title="按住拖动排序">⠿</span>
         <input class="el-cat-row__color" type="color" value="${cat.color}" title="选择颜色">
         <input class="b3-text-field fn__flex-1" value="${esc(cat.name)}">
         <button class="b3-button b3-button--outline el-cat-row__btn el-cat-row__delete" title="删除">✕</button>`;
@@ -446,16 +551,24 @@ function mountCategoryEditor(ctx: Ctx, root: HTMLElement): void {
       const color = row.querySelector(".el-cat-row__color") as HTMLInputElement;
       const input = row.querySelector('.b3-text-field') as HTMLInputElement;
       const delBtn = row.querySelector(".el-cat-row__delete") as HTMLButtonElement;
-      handle.addEventListener("dragstart", (event) => {
-        draggedRow = row;
-        row.classList.add("el-cat-row--dragging");
-        event.dataTransfer?.setData("text/plain", cat.id);
-        if (event.dataTransfer) event.dataTransfer.effectAllowed = "move";
-      });
-      handle.addEventListener("dragend", () => {
-        row.classList.remove("el-cat-row--dragging");
-        draggedRow = null;
-        render();
+      handle.addEventListener("mousedown", (event) => {
+        if (event.button !== 0) return;
+        event.preventDefault();
+        finishDrag(false);
+        dragState = {
+          row,
+          placeholder: null,
+          startX: event.clientX,
+          startY: event.clientY,
+          offsetY: 0,
+          left: 0,
+          width: 0,
+          started: false,
+          originNext: row.nextSibling
+        };
+        document.addEventListener("mousemove", onDragMove, true);
+        document.addEventListener("mouseup", onDragUp, true);
+        window.addEventListener("blur", onDragCancel);
       });
       color.addEventListener("change", () => {
         store.updateCategory(cat.id, { color: color.value });
@@ -480,25 +593,6 @@ function mountCategoryEditor(ctx: Ctx, root: HTMLElement): void {
     });
   };
   render();
-
-  listBox.addEventListener("dragover", (event) => {
-    if (!draggedRow) return;
-    event.preventDefault();
-    const target = (event.target as HTMLElement).closest<HTMLElement>(".el-cat-row");
-    if (!target || target === draggedRow) return;
-    const rect = target.getBoundingClientRect();
-    listBox.insertBefore(draggedRow, event.clientY < rect.top + rect.height / 2 ? target : target.nextSibling);
-  });
-  listBox.addEventListener("drop", (event) => {
-    if (!draggedRow) return;
-    event.preventDefault();
-    const orderedIds = Array.from(listBox.querySelectorAll<HTMLElement>(".el-cat-row"))
-      .map((row) => row.dataset.categoryId)
-      .filter((id): id is string => !!id);
-    store.reorderCategories(orderedIds);
-    draggedRow = null;
-    render();
-  });
 
   const addCategory = () => {
     const name = nameInput.value.trim();

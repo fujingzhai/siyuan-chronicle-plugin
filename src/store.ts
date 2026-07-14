@@ -10,9 +10,9 @@ const LEGACY_FILE_PATHS = [
 ];
 
 export const PALETTE = [
-  "#d4554d", "#e07b39", "#c9a227", "#5f9e42",
-  "#2f9e8f", "#3a8fd4", "#5b6ee1", "#8f5fd4",
-  "#c75d9e", "#a67c52", "#d44d7d", "#64748b"
+  "#d1495b", "#2f80ed", "#2e9d68", "#9b51e0",
+  "#e07a1f", "#008b95", "#c33c9b", "#6c63d9",
+  "#a66a35", "#6f8f2f", "#d06086", "#52606d"
 ];
 
 function emptyData(): LedgerData {
