@@ -4,9 +4,9 @@
 
 Chronicle is a record panel organized around time and categories, with links to native SiYuan notes.
 
-Chronicle places concrete activities back into their years, quarters, months, and weeks, gradually turning the passage of time into recognizable landmarks of memory. As records accumulate, the past becomes something that can be distinguished, revisited, and understood through what actually happened within it.
+Chronicle records the past: it places concrete activities back into their years, quarters, months, and weeks, gradually turning the passage of time into recognizable landmarks of memory. As records accumulate, the past becomes something that can be distinguished, revisited, and understood through what actually happened within it.
 
-Unlike calendars and to-do lists, Chronicle is not centered on reminders, scheduling, or completion status. It uses time, categories, and notes to build a personal record that can grow over time and remain easy to revisit.
+Chronicle also looks ahead: unlike calendars and to-do panels organized around dates and completion states, it can still carry plans. An activity may look back on a period or mark an intention for the next one; years, quarters, months, weeks, and categories give each of them a fitting place.
 
 ## Features
 

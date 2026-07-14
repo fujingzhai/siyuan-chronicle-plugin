@@ -647,9 +647,14 @@ export function openCategoryManager(ctx: Ctx): void {
 
 export function openSettingsDialog(ctx: Ctx): void {
   const { store } = ctx;
+  let settingsKeydown: ((event: KeyboardEvent) => void) | null = null;
   const dialog = new Dialog({
     title: "设置",
     width: "520px",
+    destroyCallback: () => {
+      if (settingsKeydown) document.removeEventListener("keydown", settingsKeydown, true);
+      settingsKeydown = null;
+    },
     content: `
 <div class="b3-dialog__content el-dialog">
   <div class="el-settings__section">
@@ -695,6 +700,8 @@ export function openSettingsDialog(ctx: Ctx): void {
   let saving = false;
   const saveSettings = async () => {
     if (saving) return;
+    const active = document.activeElement;
+    if (active instanceof HTMLElement && dialog.element.contains(active)) active.blur();
     const targetNotebook = notebookSel.value;
     if (!targetNotebook) {
       showMessage("请选择默认笔记本", 3500, "info");
@@ -722,13 +729,22 @@ export function openSettingsDialog(ctx: Ctx): void {
     }
   };
   saveButton.addEventListener("click", () => void saveSettings());
-  dialog.element.addEventListener("keydown", (event) => {
+  settingsKeydown = (event) => {
     if (event.key !== "Enter" || event.isComposing || event.repeat || event.keyCode === 229) return;
     if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
     const target = event.target as HTMLElement | null;
-    if (target?.closest("textarea, select, button, a, input[type='color'], [contenteditable=true], [data-role='new-name']")) return;
+    const ownContainer = dialog.element.matches(".b3-dialog__container")
+      ? dialog.element
+      : dialog.element.querySelector<HTMLElement>(".b3-dialog__container");
+    const visibleDialogs = Array.from(document.querySelectorAll<HTMLElement>(".b3-dialog__container"))
+      .filter((element) => element.getClientRects().length > 0);
+    if (ownContainer && visibleDialogs.at(-1) !== ownContainer) return;
+    if (target && dialog.element.contains(target) &&
+      target.closest("textarea, button, a, input[type='color'], [contenteditable=true], [data-role='new-name']")) return;
     event.preventDefault();
     event.stopPropagation();
     void saveSettings();
-  });
+  };
+  document.addEventListener("keydown", settingsKeydown, true);
+  requestAnimationFrame(() => saveButton.focus({ preventScroll: true }));
 }
