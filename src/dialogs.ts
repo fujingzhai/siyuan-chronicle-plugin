@@ -7,7 +7,6 @@ import {
   currentPeriod,
   fmtMonthDay,
   maxNumOf,
-  periodBadge,
   periodDateRange,
   samePeriod,
   toISODate,
@@ -320,8 +319,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
       const catName = (cat ? cat.name : "无类别").replace(/\//g, "／");
       const safeTitle = title.replace(/\//g, "／");
       const path = `/${catName}/${safeTitle}`;
-      const md = `> 岁时记 · ${periodBadge(work.period)} · ${catName}`;
-      const docId = await createDocWithMd(notebook, path, md);
+      const docId = await createDocWithMd(notebook, path, "");
       await setBlockAttrs(docId, { "custom-chronicle": work.id }).catch(() => undefined);
       work.docs.push({ id: docId, title });
       renderDocs();
@@ -587,6 +585,9 @@ function mountCategoryEditor(ctx: Ctx, root: HTMLElement): void {
         const v = input.value.trim();
         if (v) store.updateCategory(cat.id, { name: v });
       });
+      input.addEventListener("keydown", (event) => {
+        if (event.key === "Enter" && !event.isComposing && event.keyCode !== 229) input.blur();
+      });
       delBtn.addEventListener("click", () => {
         const n = store.data.entries.filter((e) => e.categoryId === cat.id).length;
         const doDelete = () => {
@@ -672,13 +673,16 @@ export function openSettingsDialog(ctx: Ctx): void {
     });
 
   (dialog.element.querySelector('[data-role="cancel"]') as HTMLElement).addEventListener("click", () => dialog.destroy());
-  (dialog.element.querySelector('[data-role="save"]') as HTMLButtonElement).addEventListener("click", async (event) => {
-    const saveButton = event.currentTarget as HTMLButtonElement;
+  const saveButton = dialog.element.querySelector('[data-role="save"]') as HTMLButtonElement;
+  let saving = false;
+  const saveSettings = async () => {
+    if (saving) return;
     const targetNotebook = notebookSel.value;
     if (!targetNotebook) {
       showMessage("请选择默认笔记本", 3500, "info");
       return;
     }
+    saving = true;
     saveButton.disabled = true;
     saveButton.textContent = "迁移中…";
     try {
@@ -693,9 +697,20 @@ export function openSettingsDialog(ctx: Ctx): void {
       const moved = result.movedTimeRoots + result.movedActivityDocs;
       if (moved) showMessage(`已迁移 ${moved} 组岁时记笔记`, 4000, "info");
     } catch (err) {
+      saving = false;
       saveButton.disabled = false;
       saveButton.textContent = "保存";
       showMessage(`切换默认笔记本失败：${(err as Error).message}`, 7000, "error");
     }
+  };
+  saveButton.addEventListener("click", () => void saveSettings());
+  dialog.element.addEventListener("keydown", (event) => {
+    if (event.key !== "Enter" || event.isComposing || event.repeat || event.keyCode === 229) return;
+    if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+    const target = event.target as HTMLElement | null;
+    if (target?.closest("textarea, select, button, a, input[type='color'], [contenteditable=true], [data-role='new-name']")) return;
+    event.preventDefault();
+    event.stopPropagation();
+    void saveSettings();
   });
 }
