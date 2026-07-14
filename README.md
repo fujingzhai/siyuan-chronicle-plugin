@@ -49,3 +49,7 @@ MIT
 
 - Claude Code（Fable 5）：约 30%
 - Codex（GPT 5.6 Sol）：约 70%
+
+## 讨论
+
+[欢迎体验岁时记（Chronicle）插件 - 链滴](https://ld246.com/article/1784039545151)
