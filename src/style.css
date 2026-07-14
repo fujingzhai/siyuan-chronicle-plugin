@@ -1,0 +1,744 @@
+/* ===== 岁时记 ===== */
+
+.el-root {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  position: relative;
+  outline: none;
+  background: var(--b3-theme-background);
+  color: var(--b3-theme-on-background);
+  font-family: var(--b3-font-family);
+}
+
+/* ---- 主体布局 ---- */
+.el-bodyhost {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.el-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+.el-main {
+  flex: 1;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 16px;
+}
+
+.el-empty {
+  color: var(--b3-theme-on-surface-light);
+  text-align: center;
+  padding: 48px 16px;
+  font-size: 14px;
+}
+
+.el-banner {
+  max-width: 1020px;
+  margin: 0 auto 12px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  border: 1px dashed var(--b3-border-color);
+  border-radius: var(--b3-border-radius-b);
+  color: var(--b3-theme-on-surface-light);
+  font-size: 13px;
+}
+
+/* ---- 时间视图：年季月固定一屏，周独立纵向滚动 ---- */
+.el-timewrap {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  padding: 0;
+}
+
+.el-timewrap .el-banner {
+  margin: 0 0 8px;
+}
+
+.el-panes {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  position: relative;
+  overflow-x: hidden;
+  overflow-y: hidden;
+}
+
+/* 拖拽调宽手柄 */
+.el-resize {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 7px;
+  cursor: col-resize;
+  z-index: 4;
+}
+
+.el-resize:hover,
+.el-resize:active {
+  background: linear-gradient(to right, transparent 2px, var(--b3-theme-on-surface-light) 3px, var(--b3-theme-on-surface-light) 4px, transparent 5px);
+}
+
+/* 年｜季｜月网格，12 个月行均分高度（列宽由拖拽手柄控制） */
+.el-fixed {
+  display: grid;
+  grid-template-rows: repeat(12, minmax(0, 1fr));
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  flex-shrink: 0;
+}
+
+.el-cell {
+  min-width: 0;
+  min-height: 0;
+  padding: 4px 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+  overflow: hidden;
+}
+
+.el-cell:hover {
+  overflow: visible;
+  z-index: 2;
+}
+
+/* 年列 */
+.el-cell--year {
+  position: relative;
+  padding-right: 36px;
+  border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 58%, transparent);
+}
+
+.el-ylabel {
+  font-size: 18px;
+  font-weight: 700;
+}
+
+.el-year-nav {
+  width: auto;
+  align-self: stretch;
+  margin-right: -28px;
+  margin-top: auto;
+  display: flex;
+  gap: 6px;
+}
+
+.el-year-nav button {
+  flex: 1 1 33.333%;
+  height: 26px;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  color: var(--b3-theme-on-surface);
+  cursor: pointer;
+  font-size: 17px;
+  line-height: 24px;
+  opacity: 0.48;
+  transition: opacity 0.15s, background 0.15s;
+}
+
+.el-year-nav button:hover {
+  background: var(--b3-list-hover);
+  color: var(--b3-theme-on-background);
+  opacity: 0.88;
+}
+
+.el-year-nav button svg {
+  width: 13px;
+  height: 13px;
+  fill: currentColor;
+}
+
+/* 季列 */
+.el-cell--quarter {
+  position: relative;
+  padding-right: 36px;
+  border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 58%, transparent);
+  justify-content: flex-start;
+}
+
+.el-cell--quarter::after,
+.el-cell--month::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 12px;
+  height: 1px;
+  background: color-mix(in srgb, var(--b3-border-color) 62%, transparent);
+}
+
+.el-qlabel {
+  font-size: 14.5px;
+  font-weight: 700;
+}
+
+/* 月列 */
+.el-cell--month {
+  border-right: 1px solid color-mix(in srgb, var(--b3-border-color) 58%, transparent);
+  position: relative;
+  padding-right: 36px;
+}
+
+.el-cell--month:hover {
+  overflow: hidden;
+}
+
+.el-cell--year--current,
+.el-cell--quarter--current,
+.el-cell--month--current {
+  background: color-mix(in srgb, var(--b3-theme-on-background) 4%, transparent);
+}
+
+.el-mlabel {
+  font-size: 13.5px;
+  font-weight: 600;
+  line-height: 22px;
+  flex-shrink: 0;
+}
+
+/* 月标题独占一行；活动过多时在下方区域内部滚动，添加按钮固定在活动首行右侧。 */
+.el-cell--month > .el-chips {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  align-content: flex-start;
+  scrollbar-width: none;
+}
+
+.el-cell--month > .el-chips::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.el-cell--year > .el-chips__add,
+.el-cell--quarter > .el-chips__add,
+.el-cell--month > .el-chips__add {
+  position: absolute;
+  right: 7px;
+  top: 5px;
+  transform: none;
+}
+
+.el-cell--year--current .el-tlabel,
+.el-cell--quarter--current .el-tlabel,
+.el-cell--month--current .el-tlabel {
+  padding: 1px 0;
+  margin-left: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--b3-theme-on-background);
+  font-weight: 700;
+}
+
+/* 周列：每周一行，可滚动但隐藏狭窄的原生滚动条。 */
+.el-weeks {
+  min-width: 0;
+  height: 100%;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: 0 8px 0 10px;
+  box-sizing: border-box;
+  scrollbar-width: none;
+}
+
+.el-weeks::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.el-wrow {
+  min-width: 0;
+  min-height: 34px;
+  padding: 3px 5px;
+  display: flex;
+  align-items: flex-start;
+  gap: 3px;
+  border-radius: 7px;
+}
+
+.el-wrow:hover {
+  background: var(--b3-list-hover);
+}
+
+.el-wrow--current {
+  background: color-mix(in srgb, var(--b3-theme-on-background) 4%, transparent);
+}
+
+.el-wlabel {
+  width: 152px;
+  flex: 0 0 152px;
+  font-size: 12px;
+  line-height: 26px;
+  display: grid;
+  grid-template-columns: 52px max-content 12px;
+  column-gap: 3px;
+  font-variant-numeric: tabular-nums;
+}
+
+.el-wlabel .el-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.el-wrow--current .el-wlabel {
+  color: var(--b3-theme-on-background);
+  font-weight: 600;
+}
+
+.el-wrow:hover .el-chips__add {
+  opacity: 1;
+}
+
+/* 时间标签通用 */
+.el-tlabel {
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  user-select: none;
+  white-space: nowrap;
+  max-width: 100%;
+  flex-shrink: 0;
+}
+
+.el-tlabel:hover .el-tlabel__text {
+  color: var(--b3-theme-primary);
+}
+
+.el-tlabel.el-wlabel {
+  display: grid;
+  grid-template-columns: 52px max-content 12px;
+  column-gap: 3px;
+}
+
+.el-hasdoc .el-doclink {
+  opacity: 0.55;
+}
+
+.el-doclink {
+  width: 11px;
+  height: 11px;
+  fill: currentColor;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.el-tlabel:hover .el-doclink {
+  opacity: 0.7;
+}
+
+.el-sub {
+  font-size: 11px;
+  font-weight: 400;
+  color: var(--b3-theme-on-surface-light);
+  font-variant-numeric: tabular-nums;
+}
+
+.el-flash {
+  animation: el-flash 1.6s ease-out;
+}
+
+@keyframes el-flash {
+  0% { box-shadow: inset 0 0 0 999px var(--b3-list-hover); }
+  100% { box-shadow: none; }
+}
+
+/* ---- 活动卡片 ---- */
+
+.el-chips {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+  min-height: 26px;
+}
+
+/* 左侧时间格的空白区域也应能接收跨格拖动，而不只限于活动框附近。 */
+.el-cell > .el-chips {
+  width: 100%;
+  box-sizing: border-box;
+}
+
+/* 年/季格：活动紧贴标签下方堆叠，不上下居中 */
+.el-chips--stack {
+  flex: 1 1 auto;
+  width: 100%;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.el-chips--stack::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.el-chips--stack > .el-chip {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+/* 年格空间较充足，活动固定为一行一个，便于纵向浏览和排序。 */
+.el-chips--year {
+  flex: 1 1 auto;
+  width: 100%;
+  min-height: 0;
+  flex-direction: column;
+  flex-wrap: nowrap;
+  align-items: flex-start;
+  align-content: flex-start;
+  overflow-y: auto;
+  scrollbar-width: none;
+}
+
+.el-chips--year::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.el-chips--year > .el-chip {
+  flex: 0 0 auto;
+  max-width: 100%;
+}
+
+.el-chips__add {
+  border: 1px dashed var(--b3-border-color);
+  background: transparent;
+  color: var(--b3-theme-on-surface-light);
+  border-radius: var(--b3-border-radius);
+  width: 24px;
+  height: 24px;
+  line-height: 1;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.el-cell:hover .el-chips__add {
+  opacity: 1;
+}
+
+.el-chips__add:hover {
+  color: var(--b3-theme-primary);
+  border-color: var(--b3-theme-primary);
+}
+
+.el-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 280px;
+  padding: 2px 8px;
+  border: 1px solid var(--b3-border-color);
+  border-left: 3px solid var(--el-cat);
+  border-radius: var(--b3-border-radius);
+  background: var(--b3-theme-surface);
+  cursor: pointer;
+  font-size: 13px;
+  line-height: 20px;
+  user-select: none;
+}
+
+.el-chip:hover {
+  box-shadow: var(--b3-dialog-shadow);
+  border-color: var(--el-cat);
+}
+
+.el-chip { cursor: grab; touch-action: none; }
+.el-chip:active { cursor: grabbing; }
+
+.el-chip--drag-source {
+  position: fixed !important;
+  z-index: 10000;
+  margin: 0 !important;
+  opacity: 0.92;
+  pointer-events: none;
+  cursor: grabbing;
+  box-shadow: 0 7px 20px color-mix(in srgb, var(--b3-theme-on-background) 22%, transparent);
+  transform: scale(1.02);
+}
+
+.el-chip-drop-placeholder {
+  flex: 0 0 auto;
+  box-sizing: border-box;
+  border: 1px dashed var(--b3-theme-primary);
+  border-left-width: 3px;
+  border-radius: var(--b3-border-radius);
+  background: color-mix(in srgb, var(--b3-theme-primary) 7%, transparent);
+  pointer-events: none;
+}
+
+.el-chips--drop-target {
+  background: color-mix(in srgb, var(--b3-theme-primary) 4%, transparent);
+  border-radius: var(--b3-border-radius);
+}
+
+.el-chip__title {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.el-chip__date {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
+  flex-shrink: 0;
+  font-variant-numeric: tabular-nums;
+}
+
+.el-chip__docs {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  padding: 2px 3px;
+  border-radius: 3px;
+}
+
+.el-chip__docs:hover {
+  color: var(--b3-theme-primary);
+  background: var(--b3-theme-primary-lightest);
+}
+
+.el-delete-entry__docs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 16px;
+  cursor: pointer;
+  color: var(--b3-theme-on-surface);
+}
+
+.el-chip__docs svg {
+  width: 12px;
+  height: 12px;
+  fill: currentColor;
+}
+
+/* ---- 对话框 ---- */
+.el-dialog .el-form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.el-form__row {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+}
+
+.el-form__label {
+  width: 72px;
+  flex-shrink: 0;
+  font-size: 13px;
+  color: var(--b3-theme-on-surface);
+  line-height: 28px;
+}
+
+.el-form__hint {
+  font-size: 12px;
+  color: var(--b3-theme-on-surface-light);
+  line-height: 1.6;
+}
+
+.el-period {
+  gap: 6px;
+}
+
+.el-period__year {
+  width: 76px;
+  flex-shrink: 0;
+}
+
+.el-date-editor__fields {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 28px;
+}
+
+.el-date-part {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--b3-theme-on-surface);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.el-date-editor--day-only .el-date-month-part {
+  display: none;
+}
+
+.el-date-editor__separator {
+  color: var(--b3-theme-on-surface-light);
+  font-size: 14px;
+}
+
+.el-date-input {
+  width: 40px;
+  min-width: 0;
+  text-align: center;
+  font-variant-numeric: tabular-nums;
+}
+
+.el-docs:not(:empty) {
+  margin-top: 6px;
+}
+
+.el-docs__row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 3px 6px;
+  border-radius: var(--b3-border-radius);
+  background: var(--b3-theme-background);
+  margin-bottom: 4px;
+}
+
+.el-docs__icon {
+  width: 12px;
+  height: 12px;
+  fill: var(--b3-theme-on-surface-light);
+  flex-shrink: 0;
+}
+
+.el-docs__title {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.el-docs__title:hover {
+  color: var(--b3-theme-primary);
+}
+
+.el-docs__remove {
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.el-doc-results {
+  margin-top: 4px;
+  max-height: 180px;
+  overflow-y: auto;
+}
+
+.el-doc-results__item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  padding: 4px 8px;
+  border-radius: var(--b3-border-radius);
+  cursor: pointer;
+  font-size: 13px;
+}
+
+.el-doc-results__item:hover {
+  background: var(--b3-list-hover);
+}
+
+.el-doc-results__path {
+  font-size: 11px;
+  color: var(--b3-theme-on-surface-light);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ---- 类目管理 ---- */
+.el-settings__section + .el-settings__section {
+  margin-top: 18px;
+  padding-top: 14px;
+  border-top: 1px solid var(--b3-border-color);
+}
+
+.el-settings__title {
+  margin-bottom: 9px;
+  font-size: 13px;
+  font-weight: 650;
+  color: var(--b3-theme-on-background);
+}
+
+.el-cat-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.el-cat-row__color {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 5px;
+  cursor: pointer;
+  flex-shrink: 0;
+  border: 1px solid var(--b3-border-color);
+  background: transparent;
+  overflow: hidden;
+}
+
+.el-cat-row__color::-webkit-color-swatch-wrapper {
+  padding: 0;
+}
+
+.el-cat-row__color::-webkit-color-swatch {
+  border: 0;
+}
+
+.el-cat-row__handle {
+  width: 18px;
+  flex: 0 0 18px;
+  color: var(--b3-theme-on-surface-light);
+  cursor: grab;
+  user-select: none;
+  text-align: center;
+  font-size: 16px;
+}
+
+.el-cat-row__handle:active {
+  cursor: grabbing;
+}
+
+.el-cat-row--dragging {
+  opacity: 0.45;
+}
+
+.el-cat-row__btn {
+  padding: 2px 8px;
+  min-width: 0;
+}

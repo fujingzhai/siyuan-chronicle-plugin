@@ -1,0 +1,24 @@
+{
+  "name": "siyuan-chronicle-plugin",
+  "version": "1.0.0",
+  "description": "A time-first chronicle panel for SiYuan, organized by year, quarter, month, and week.",
+  "author": "游夏",
+  "license": "MIT",
+  "packageManager": "pnpm@10.33.0",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/fujingzhai/siyuan-chronicle-plugin.git"
+  },
+  "scripts": {
+    "build": "vite build && node scripts/copy-static.mjs && node scripts/package.mjs",
+    "make-install": "pnpm build && node scripts/install.mjs"
+  },
+  "dependencies": {
+    "siyuan": "^1.2.1"
+  },
+  "devDependencies": {
+    "typescript": "^5.9.3",
+    "vite": "^7.2.7"
+  }
+}

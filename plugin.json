@@ -1,0 +1,37 @@
+{
+  "name": "siyuan-chronicle-plugin",
+  "author": "游夏",
+  "url": "https://github.com/fujingzhai/siyuan-chronicle-plugin",
+  "version": "1.0.0",
+  "minAppVersion": "3.7.0",
+  "backends": [
+    "windows",
+    "linux",
+    "darwin"
+  ],
+  "frontends": [
+    "desktop",
+    "desktop-window",
+    "browser-desktop"
+  ],
+  "displayName": {
+    "default": "Chronicle",
+    "zh_CN": "岁时记"
+  },
+  "description": {
+    "default": "A quiet, time-first chronicle for recording life by year, quarter, month, and week, with optional links to native SiYuan notes.",
+    "zh_CN": "以年、季、月、周为经纬的低干扰岁时记录面板，可选绑定思源原生笔记。"
+  },
+  "readme": {
+    "default": "README.md",
+    "zh_CN": "README_zh_CN.md"
+  },
+  "keywords": [
+    "chronicle",
+    "岁时记",
+    "timeline",
+    "时间轴",
+    "记录",
+    "年表"
+  ]
+}
