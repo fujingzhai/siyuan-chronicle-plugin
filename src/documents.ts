@@ -1,5 +1,6 @@
 import { createDocWithMd, getIDsByHPath, moveDocsByID, querySQL } from "./api";
 import { Store } from "./store";
+import { DocRef } from "./types";
 
 interface DocRow {
   id: string;
@@ -40,6 +41,61 @@ export async function reconcileBoundEntries(store: Store): Promise<{ removedEntr
 function parentHPath(hpath: string): string {
   const index = hpath.lastIndexOf("/");
   return index <= 0 ? "/" : hpath.slice(0, index);
+}
+
+function ialValue(ial: string, name: string): string | null {
+  const match = ial.match(new RegExp(`(?:^|\\s)${name}="([^"]*)"`));
+  return match?.[1] ?? null;
+}
+
+function categoryPathName(name: string): string {
+  return name.replace(/\//g, "／");
+}
+
+/**
+ * 活动改类目时，只迁移仍位于原类目下、且确由该活动创建的绑定笔记。
+ * 用户绑定的既有笔记没有 custom-chronicle 标记；用户手动移走的笔记父路径也不再匹配，
+ * 两者都会保持原位。
+ */
+export async function migrateManagedActivityDocsForCategory(
+  store: Store,
+  entryId: string,
+  docs: DocRef[],
+  fromCategoryId: string | null,
+  toCategoryId: string | null
+): Promise<number> {
+  if (!docs.length || fromCategoryId === toCategoryId) return 0;
+  const fromCategory = store.categoryOf(fromCategoryId);
+  const toCategory = store.categoryOf(toCategoryId);
+  if ((fromCategoryId && !fromCategory) || (toCategoryId && !toCategory)) return 0;
+
+  const fromName = categoryPathName(fromCategory?.name ?? "无类别");
+  const toName = categoryPathName(toCategory?.name ?? "无类别");
+  if (fromName === toName) return 0;
+
+  const ids = Array.from(new Set(docs.map((doc) => doc.id).filter(Boolean)));
+  if (!ids.length) return 0;
+  const rows = await querySQL<DocRow>(
+    `SELECT id, box, path, hpath, ial FROM blocks WHERE type = 'd' ` +
+    `AND id IN (${ids.map(sqlString).join(",")})`
+  );
+  const eligible = rows.filter((row) =>
+    ialValue(row.ial, "custom-chronicle") === entryId &&
+    parentHPath(row.hpath) === `/${fromName}`
+  );
+  if (!eligible.length) return 0;
+
+  const byNotebook = new Map<string, DocRow[]>();
+  for (const row of eligible) {
+    const batch = byNotebook.get(row.box) ?? [];
+    batch.push(row);
+    byNotebook.set(row.box, batch);
+  }
+  for (const [notebook, batch] of byNotebook) {
+    const targetParent = await createDocWithMd(notebook, `/${toName}`, "");
+    await moveDocsByID(batch.map((row) => row.id), targetParent);
+  }
+  return eligible.length;
 }
 
 async function sourceDocs(notebook: string): Promise<DocRow[]> {

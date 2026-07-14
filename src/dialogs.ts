@@ -1,6 +1,6 @@
 import { App, Dialog, confirm, showMessage } from "siyuan";
 import { createDocWithMd, createNotebook, deleteBlock, lsNotebooks, openDoc, searchDocs, setBlockAttrs } from "./api";
-import { migrateChronicleDocuments } from "./documents";
+import { migrateChronicleDocuments, migrateManagedActivityDocsForCategory } from "./documents";
 import { PALETTE, Store, genId } from "./store";
 import {
   UNIT_LABELS,
@@ -101,6 +101,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
   const { store } = ctx;
   const isNew = !opts.entry;
   const originalPeriod = opts.entry ? { ...opts.entry.period } : null;
+  const originalCategoryId = opts.entry?.categoryId ?? null;
   const work: Entry = opts.entry
     ? JSON.parse(JSON.stringify(opts.entry))
     : {
@@ -331,14 +332,17 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
 
   // ---- 动作 ----
   $("cancel").addEventListener("click", () => dialog.destroy());
-  const saveEntry = () => {
+  const saveButton = $<HTMLButtonElement>("save");
+  let saving = false;
+  const saveEntry = async () => {
+    if (saving) return;
     const title = titleInput.value.trim();
     if (!title) {
       showMessage("标题不能为空", 4000, "info");
       return;
     }
     work.title = title;
-    work.categoryId = $<HTMLSelectElement>("category").value || null;
+    const nextCategoryId = $<HTMLSelectElement>("category").value || null;
     work.note = $<HTMLInputElement>("note").value.trim();
     if (originalPeriod && !samePeriod(originalPeriod, work.period)) delete work.order;
     delete work.done;
@@ -365,10 +369,24 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
     } else {
       delete work.dates;
     }
-    store.upsertEntry(work);
-    dialog.destroy();
+    saving = true;
+    saveButton.disabled = true;
+    saveButton.textContent = "保存中…";
+    try {
+      if (!isNew && originalCategoryId !== nextCategoryId) {
+        await migrateManagedActivityDocsForCategory(store, work.id, work.docs, originalCategoryId, nextCategoryId);
+      }
+      work.categoryId = nextCategoryId;
+      store.upsertEntry(work);
+      dialog.destroy();
+    } catch (err) {
+      saving = false;
+      saveButton.disabled = false;
+      saveButton.textContent = "保存";
+      showMessage(`保存活动失败：${(err as Error).message}`, 7000, "error");
+    }
   };
-  $("save").addEventListener("click", saveEntry);
+  saveButton.addEventListener("click", () => void saveEntry());
   dialog.element.addEventListener("keydown", (event) => {
     if (event.key !== "Enter" || event.isComposing || event.repeat || event.keyCode === 229) return;
     if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
@@ -376,7 +394,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
     if (target?.closest("textarea, select, button, a, [contenteditable=true], [data-role='doc-search'], .el-doc-results")) return;
     event.preventDefault();
     event.stopPropagation();
-    saveEntry();
+    void saveEntry();
   });
   if (!isNew) {
     $("delete").addEventListener("click", () => {
