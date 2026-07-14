@@ -24,7 +24,8 @@
   },
   "readme": {
     "default": "README.md",
-    "zh_CN": "README_zh_CN.md"
+    "zh_CN": "README.md",
+    "en_US": "README_en_US.md"
   },
   "keywords": [
     "chronicle",

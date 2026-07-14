@@ -1,37 +1,37 @@
-# Chronicle
+# 岁时记（Chronicle）
 
-[简体中文](./README_zh_CN.md) | English
+简体中文 | [English](./README_en_US.md)
 
-Chronicle is a record panel organized around time and categories, with links to native SiYuan notes.
+岁时记是一款以时间和类目为经纬的记录面板，可关联思源原生笔记。
 
-Chronicle places concrete activities back into their years, quarters, months, and weeks, gradually turning the passage of time into recognizable landmarks of memory. As records accumulate, the past becomes something that can be distinguished, revisited, and understood through what actually happened within it.
+岁时记把具体活动放回它所处的年、季、月、周，让连续流逝的时间逐渐形成可辨认的记忆坐标。随着记录积累，过去不再只是模糊的一段岁月，而能通过其中发生的事情被重新看见和理解。
 
-Unlike calendars and to-do lists, Chronicle is not centered on reminders, scheduling, or completion status. It uses time, categories, and notes to build a personal record that can grow over time and remain easy to revisit.
+它区别于日程和待办：不以提醒、排程和完成状态为中心，而是借助时间、类目与笔记，形成可以持续积累和回看的个人记录。
 
-## Features
+## 功能
 
-- View year, quarter, month, and week in one annual panel, move continuously between years, or locate today.
-- Record an activity's title, category, time period, exact dates, and note.
-- Reorder activities by dragging or move them into another time period.
-- Create notes from time nodes and link one or more existing notes to an activity.
-- Customize categories and the default notebook to build your own record system.
+- 在一个年度面板中查看年、季、月、周，并连续切换年份或定位今天。
+- 记录活动的标题、类目、所属时间、具体日期与备注。
+- 拖动调整活动顺序，或将活动移动到另一时间范围。
+- 点击时间节点创建时间笔记，为活动关联一篇或多篇既有笔记。
+- 自定义类目与默认笔记本，建立适合自己的记录体系。
 
-## Notes and notebooks
+## 笔记与笔记本
 
-On first use, Chronicle uses or creates a notebook named `岁时记`. Notebooks and linked documents are associated by their SiYuan IDs, so moving or renaming them does not break the connection.
+首次使用时，岁时记会使用或创建同名笔记本。笔记本和绑定笔记均以思源 ID 关联，因此移动或改名不会影响关联。
 
-When the default notebook changes, Chronicle migrates only notes it created and leaves existing documents linked from elsewhere in place. Activities and notes remain independent: deleting a note does not delete its activity, while deleting an activity lets you choose whether its linked notes should also be removed.
+更换默认笔记本时，只迁移岁时记创建的笔记，不会移动从其他位置关联的既有文档。活动与笔记彼此独立：删除笔记不会删除活动；删除活动时，可自行选择是否同时删除关联笔记。
 
-## Shortcuts
+## 快捷键
 
-- `T`: locate today
-- `N`: create an activity
-- `S`: open settings
-- `←` / `→`: change year
+- `T`：定位今天
+- `N`：创建活动
+- `S`：打开设置
+- `←` / `→`：切换年份
 
-Shortcuts work only while the Chronicle panel is visible and no text field or dialog is being edited.
+快捷键仅在岁时记面板可见且没有进行输入或编辑时生效。
 
-## Build
+## 构建
 
 ```bash
 pnpm install
@@ -39,13 +39,13 @@ pnpm build
 pnpm make-install
 ```
 
-## License
+## 许可证
 
 MIT
 
-## Statement
+## 声明
 
-This plugin was developed entirely through vibe coding:
+本插件完全通过 vibe coding 开发：
 
-- Claude Code (Fable 5): approximately 30%
-- Codex (GPT 5.6 Sol): approximately 70%
+- Claude Code（Fable 5）：约 30%
+- Codex（GPT 5.6 Sol）：约 70%
