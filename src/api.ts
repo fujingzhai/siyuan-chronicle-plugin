@@ -12,6 +12,10 @@ function kernel<T>(url: string, data: Record<string, unknown>): Promise<T> {
   });
 }
 
+function sqlString(value: string): string {
+  return `'${value.replace(/'/g, "''")}'`;
+}
+
 export interface NotebookInfo {
   id: string;
   name: string;
@@ -56,8 +60,17 @@ export async function createDocWithMd(notebook: string, path: string, markdown: 
 
 /** 按人类可读路径查询文档 id（不存在则返回空数组） */
 export async function getIDsByHPath(notebook: string, path: string): Promise<string[]> {
-  const ids = await kernel<string[]>("/api/filetree/getIDsByHPath", { notebook, path });
-  return ids || [];
+  const rows = await querySQL<{ id: string }>(
+    `SELECT id FROM blocks WHERE type = 'd' AND box = ${sqlString(notebook)} ` +
+    `AND hpath = ${sqlString(path)} ORDER BY id ASC`
+  );
+  return rows.map((row) => row.id);
+}
+
+/** 复用指定人类可读路径下最早存在的文档；确实不存在时才创建。 */
+export async function getOrCreateDocByHPath(notebook: string, path: string, markdown = ""): Promise<string> {
+  const existing = await getIDsByHPath(notebook, path);
+  return existing[0] ?? createDocWithMd(notebook, path, markdown);
 }
 
 export async function querySQL<T = Record<string, unknown>>(stmt: string): Promise<T[]> {

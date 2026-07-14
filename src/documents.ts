@@ -1,4 +1,4 @@
-import { createDocWithMd, getIDsByHPath, moveDocsByID, querySQL } from "./api";
+import { getIDsByHPath, getOrCreateDocByHPath, moveDocsByID, querySQL } from "./api";
 import { Store } from "./store";
 import { DocRef } from "./types";
 
@@ -92,7 +92,7 @@ export async function migrateManagedActivityDocsForCategory(
     byNotebook.set(row.box, batch);
   }
   for (const [notebook, batch] of byNotebook) {
-    const targetParent = await createDocWithMd(notebook, `/${toName}`, "");
+    const targetParent = await getOrCreateDocByHPath(notebook, `/${toName}`);
     await moveDocsByID(batch.map((row) => row.id), targetParent);
   }
   return eligible.length;
@@ -169,7 +169,7 @@ export async function migrateChronicleDocuments(
     }
     for (const row of batch.activityDocs) {
       const parent = parentHPath(row.hpath);
-      const targetParent = parent === "/" ? targetNotebook : await createDocWithMd(targetNotebook, parent, "");
+      const targetParent = parent === "/" ? targetNotebook : await getOrCreateDocByHPath(targetNotebook, parent);
       await moveDocsByID([row.id], targetParent);
       movedActivityDocs++;
     }

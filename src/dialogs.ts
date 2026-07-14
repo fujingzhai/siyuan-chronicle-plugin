@@ -1,5 +1,15 @@
 import { App, Dialog, confirm, showMessage } from "siyuan";
-import { createDocWithMd, createNotebook, deleteBlock, lsNotebooks, openDoc, searchDocs, setBlockAttrs } from "./api";
+import {
+  createDocWithMd,
+  createNotebook,
+  deleteBlock,
+  getOrCreateDocByHPath,
+  lsNotebooks,
+  moveDocsByID,
+  openDoc,
+  searchDocs,
+  setBlockAttrs
+} from "./api";
 import { migrateChronicleDocuments, migrateManagedActivityDocsForCategory } from "./documents";
 import { PALETTE, Store, genId } from "./store";
 import {
@@ -319,8 +329,10 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
       const cat = store.categoryOf(catId);
       const catName = (cat ? cat.name : "无类别").replace(/\//g, "／");
       const safeTitle = title.replace(/\//g, "／");
-      const path = `/${catName}/${safeTitle}`;
-      const docId = await createDocWithMd(notebook, path, "");
+      const parentId = await getOrCreateDocByHPath(notebook, `/${catName}`);
+      // 先在根目录创建目标文档，再按明确的父文档 ID 移动，避免同名类目文档造成歧义。
+      const docId = await createDocWithMd(notebook, `/${safeTitle}`, "");
+      await moveDocsByID([docId], parentId);
       await setBlockAttrs(docId, { "custom-chronicle": work.id }).catch(() => undefined);
       work.docs.push({ id: docId, title });
       renderDocs();
