@@ -258,6 +258,9 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
 
   // ---- 绑定笔记 ----
   const docsBox = $("docs");
+  const persistExistingEntryDocs = () => {
+    if (!isNew) store.updateEntryDocs(work.id, work.docs);
+  };
   const renderDocs = () => {
     docsBox.innerHTML = "";
     for (const doc of work.docs) {
@@ -272,6 +275,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
       });
       (row.querySelector(".el-docs__remove") as HTMLElement).addEventListener("click", () => {
         work.docs = work.docs.filter((d) => d.id !== doc.id);
+        persistExistingEntryDocs();
         renderDocs();
       });
       docsBox.appendChild(row);
@@ -304,6 +308,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
           item.addEventListener("click", () => {
             if (!work.docs.some((d) => d.id === r.id)) {
               work.docs.push({ id: r.id, title: r.title });
+              persistExistingEntryDocs();
               renderDocs();
             }
             searchInput.value = "";
@@ -335,6 +340,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
       await moveDocsByID([docId], parentId);
       await setBlockAttrs(docId, { "custom-chronicle": work.id }).catch(() => undefined);
       work.docs.push({ id: docId, title });
+      persistExistingEntryDocs();
       renderDocs();
       showMessage(`已创建笔记「${title}」`, 3000, "info");
     } catch (err) {

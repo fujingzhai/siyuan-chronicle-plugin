@@ -1,4 +1,4 @@
-import { Plugin } from "siyuan";
+import type { Plugin } from "siyuan";
 import { Category, DEFAULT_TIME_COLS, Entry, LedgerData, PeriodRef, Settings } from "./types";
 import { periodStart, samePeriod, shiftDatesToPeriod } from "./time";
 
@@ -188,6 +188,24 @@ export class Store {
       this.data.entries.push(entry);
     }
     void this.persist();
+  }
+
+  /**
+   * 只更新既有活动的笔记绑定，不带入编辑对话框里尚未保存的其他字段。
+   * “新建并绑定”会立即创建真实文档，因此绑定关系也应同步即时落盘。
+   */
+  updateEntryDocs(id: string, docs: Entry["docs"]): boolean {
+    const entry = this.data.entries.find((item) => item.id === id);
+    if (!entry) return false;
+    const next = docs.map((doc) => ({ ...doc }));
+    const unchanged = entry.docs.length === next.length && entry.docs.every((doc, index) =>
+      doc.id === next[index]?.id && doc.title === next[index]?.title
+    );
+    if (unchanged) return true;
+    entry.docs = next;
+    entry.updated = Date.now();
+    void this.persist();
+    return true;
   }
 
   removeEntry(id: string): void {
