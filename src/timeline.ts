@@ -321,7 +321,24 @@ export interface NavItem {
   icon?: boolean;
 }
 
-/** 面板左下角的导航按钮组：设置｜上一年｜下一年｜视图切换 */
+/** 两种视图共用的最左侧年份栏：年标签＋年度活动＋底部按钮组 */
+export function buildYearCell(ctx: Ctx, year: number, handles: TimelineHandles, toggle: { icon: string; title: string }): HTMLElement {
+  const yp: PeriodRef = { unit: "year", year, num: 0 };
+  const cell = document.createElement("div");
+  cell.className = "el-cell el-cell--year" + (year === new Date().getFullYear() ? " el-cell--year--current" : "");
+  cell.style.gridRow = "1 / 13";
+  cell.style.gridColumn = "1";
+  cell.dataset.key = periodKey(yp);
+  cell.appendChild(timeLabel(ctx, yp, "el-ylabel", `${year} 年`));
+  const entries = ctx.store.data.entries.filter((e) => !e.dayOnly && samePeriod(e.period, yp));
+  const chips = chipsBox(ctx, entries, yp, "year");
+  cell.appendChild(chips);
+  hoistAddButton(cell, chips);
+  cell.appendChild(buildYearNav(year, handles, toggle));
+  return cell;
+}
+
+/** 年份栏底部的导航按钮组：设置｜上一年｜下一年｜视图切换 */
 export function buildYearNav(year: number, handles: TimelineHandles, toggle: { icon: string; title: string }): HTMLElement {
   const nav = document.createElement("div");
   nav.className = "el-year-nav";
@@ -403,14 +420,7 @@ export function renderTimeline(container: HTMLElement, ctx: Ctx, year: number, h
     return cell;
   };
 
-  const yp: PeriodRef = { unit: "year", year, num: 0 };
-  const yearCell = mkCell("el-cell el-cell--year", 1, 13, 1, year === nowYear, periodKey(yp));
-  yearCell.appendChild(timeLabel(ctx, yp, "el-ylabel", `${year} 年`));
-  const yearChips = chipsBox(ctx, entriesAt(yp), yp, "year");
-  yearCell.appendChild(yearChips);
-  hoistAddButton(yearCell, yearChips);
-  yearCell.appendChild(buildYearNav(year, handles, { icon: "iconCalendar", title: "日期面板（D）" }));
-  fixed.appendChild(yearCell);
+  fixed.appendChild(buildYearCell(ctx, year, handles, { icon: "iconCalendar", title: "日期面板（D）" }));
 
   for (let q = 1; q <= 4; q++) {
     const qp: PeriodRef = { unit: "quarter", year, num: q };

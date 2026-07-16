@@ -1,7 +1,7 @@
 import { Ctx, openEntryDialog } from "./dialogs";
 import { WEEKDAY_NAMES, daysInMonth, toISODate } from "./time";
-import { TimelineHandles, buildEntryChip, buildYearNav, refreshTimeDocs, timeLabel } from "./timeline";
-import { Entry, PeriodRef } from "./types";
+import { TimelineHandles, buildEntryChip, buildYearCell, refreshTimeDocs, timeLabel } from "./timeline";
+import { DEFAULT_TIME_COLS, Entry } from "./types";
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
@@ -21,40 +21,32 @@ function clampToMonth(entry: Entry, year: number, month: number): { from: string
   return { from: start < lo ? lo : start, to: end > hi ? hi : end };
 }
 
+/** 周一起始的月历表头 */
+const CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+
 /**
- * 日期视图：12 个月条纵向排开，每月一行 31 个日期格按日号对齐，
- * 有活动的日子标类目色圆点；日期格下方平铺该月活动卡片。
+ * 日期视图：左侧沿用时间视图的年份栏，右侧为日历式年视图——
+ * 12 张月历卡，各自下方平铺当月带日期的活动卡片。
  */
 export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, handles: TimelineHandles): void {
   const { store } = ctx;
   container.innerHTML = "";
   container.classList.add("el-datewrap");
 
+  const yearCell = buildYearCell(ctx, year, handles, { icon: "iconClock", title: "时间面板（W）" });
+  const cols = store.data.settings.colsCustomized
+    ? { ...DEFAULT_TIME_COLS, ...(store.data.settings.cols ?? {}) }
+    : { ...DEFAULT_TIME_COLS };
+  yearCell.style.width = `${(cols.y / (cols.y + cols.q + cols.m + cols.w)) * 100}%`;
+  yearCell.style.flex = "0 0 auto";
+  container.appendChild(yearCell);
+
   const now = new Date();
   const todayISO = toISODate(now);
   const entries = store.datedEntriesInYear(year);
 
-  // 头部：年标签（可开时间笔记）＋ 设置｜←｜→｜切换按钮
-  const head = document.createElement("div");
-  head.className = "el-date-head";
-  const yp: PeriodRef = { unit: "year", year, num: 0 };
-  head.appendChild(timeLabel(ctx, yp, "el-ylabel", `${year} 年`));
-  const hint = document.createElement("span");
-  hint.className = "el-date-head__hint";
-  hint.textContent = "点击日期格记录当天活动；时间视图中填了日期的活动也在此显示";
-  head.appendChild(hint);
-  head.appendChild(buildYearNav(year, handles, { icon: "iconClock", title: "时间面板（W）" }));
-  container.appendChild(head);
-
-  if (!store.data.categories.length) {
-    const banner = document.createElement("div");
-    banner.className = "el-banner";
-    banner.textContent = "还没有类目——按 S 打开设置，定义属于你自己的类目体系。";
-    container.appendChild(banner);
-  }
-
   const months = document.createElement("div");
-  months.className = "el-date-months";
+  months.className = "el-dmonths";
 
   for (let m = 1; m <= 12; m++) {
     const monthEntries = entries
@@ -72,16 +64,22 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
     }
 
     const isCurrentMonth = year === now.getFullYear() && m === now.getMonth() + 1;
-    const section = document.createElement("div");
-    section.className = "el-dmonth" + (isCurrentMonth ? " el-dmonth--current" : "");
+    const card = document.createElement("div");
+    card.className = "el-dmonth" + (isCurrentMonth ? " el-dmonth--current" : "");
+    card.appendChild(timeLabel(ctx, { unit: "month", year, num: m }, "el-dmonth__label", `${m} 月`));
 
-    const label = document.createElement("div");
-    label.className = "el-dmonth__labelbox";
-    label.appendChild(timeLabel(ctx, { unit: "month", year, num: m }, "el-dmonth__label", `${m} 月`));
-    section.appendChild(label);
+    const cal = document.createElement("div");
+    cal.className = "el-dcal";
+    for (let i = 0; i < 7; i++) {
+      const wd = document.createElement("span");
+      wd.className = "el-dcal__wd" + (i >= 5 ? " el-dcal__wd--weekend" : "");
+      wd.textContent = CAL_WEEKDAYS[i];
+      cal.appendChild(wd);
+    }
+    // 周一起始：1 号前补空位
+    const lead = (new Date(year, m - 1, 1).getDay() + 6) % 7;
+    for (let i = 0; i < lead; i++) cal.appendChild(document.createElement("span"));
 
-    const days = document.createElement("div");
-    days.className = "el-ddays";
     const dim = daysInMonth(year, m);
     for (let d = 1; d <= dim; d++) {
       const iso = isoOf(year, m, d);
@@ -92,19 +90,18 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
         + (weekday === 0 || weekday === 6 ? " el-dday--weekend" : "")
         + (iso === todayISO ? " el-dday--today" : "");
       cell.dataset.date = iso;
-      const dots = dayEntries.slice(0, 4).map((entry) => {
+      const dots = dayEntries.slice(0, 3).map((entry) => {
         const color = store.categoryOf(entry.categoryId)?.color ?? "var(--b3-theme-on-surface-light)";
         return `<i style="background:${color}"></i>`;
       }).join("");
       cell.innerHTML = `<span class="el-dday__num">${d}</span><span class="el-dday__dots">${dots}</span>`;
       const tip = [`${m}/${d} 周${WEEKDAY_NAMES[weekday]}`];
       for (const entry of dayEntries) tip.push(`· ${entry.title}`);
-      tip.push("点击记录当天活动");
       cell.title = tip.join("\n");
       cell.addEventListener("click", () => openEntryDialog(ctx, { dayMode: true, presetDate: iso }));
-      days.appendChild(cell);
+      cal.appendChild(cell);
     }
-    section.appendChild(days);
+    card.appendChild(cal);
 
     const chips = document.createElement("div");
     chips.className = "el-dmonth__chips";
@@ -113,26 +110,26 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
       // 悬停活动卡片时点亮它覆盖的日期格
       chip.addEventListener("mouseenter", () => {
         for (let d = Number(span.from.slice(8)); d <= Number(span.to.slice(8)); d++) {
-          days.querySelector(`[data-date="${isoOf(year, m, d)}"]`)?.classList.add("el-dday--hl");
+          cal.querySelector(`[data-date="${isoOf(year, m, d)}"]`)?.classList.add("el-dday--hl");
         }
       });
       chip.addEventListener("mouseleave", () => {
-        days.querySelectorAll(".el-dday--hl").forEach((el) => el.classList.remove("el-dday--hl"));
+        cal.querySelectorAll(".el-dday--hl").forEach((el) => el.classList.remove("el-dday--hl"));
       });
       chips.appendChild(chip);
     }
     const addBtn = document.createElement("button");
     addBtn.className = "el-chips__add";
-    addBtn.title = "在本月记录活动";
+    addBtn.title = "记录活动";
     addBtn.textContent = "＋";
     addBtn.addEventListener("click", () => {
       const preset = isCurrentMonth ? todayISO : isoOf(year, m, 1);
       openEntryDialog(ctx, { dayMode: true, presetDate: preset });
     });
     chips.appendChild(addBtn);
-    section.appendChild(chips);
+    card.appendChild(chips);
 
-    months.appendChild(section);
+    months.appendChild(card);
   }
 
   container.appendChild(months);

@@ -187,7 +187,7 @@ export class ChronicleApp {
 
     if (this.view === "date") {
       renderDatePanel(wrap, this.ctx, this.timeYear, handles);
-      this.main = wrap.querySelector<HTMLElement>(".el-date-months");
+      this.main = wrap.querySelector<HTMLElement>(".el-dmonths");
       if (this.pendingDateLocate) {
         this.scheduleDateLocate(wrap, this.pendingDateLocate);
       } else if (this.main) {
