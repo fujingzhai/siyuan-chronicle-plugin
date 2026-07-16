@@ -2,7 +2,7 @@
   "name": "siyuan-chronicle-plugin",
   "author": "游夏",
   "url": "https://github.com/fujingzhai/siyuan-chronicle-plugin",
-  "version": "1.0.2",
+  "version": "1.1.0",
   "minAppVersion": "3.7.0",
   "backends": [
     "windows",

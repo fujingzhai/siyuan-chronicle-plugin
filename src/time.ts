@@ -158,6 +158,12 @@ export function periodDateRange(p: PeriodRef): { start: Date; end: Date } {
   }
 }
 
+export function daysInMonth(year: number, month: number): number {
+  return new Date(year, month, 0).getDate();
+}
+
+export const WEEKDAY_NAMES = ["日", "一", "二", "三", "四", "五", "六"];
+
 export function toISODate(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 }

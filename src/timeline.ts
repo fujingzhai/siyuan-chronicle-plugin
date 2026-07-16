@@ -70,7 +70,7 @@ export async function refreshTimeDocs(container: HTMLElement, ctx: Ctx, year: nu
   }
 }
 
-export function buildEntryChip(ctx: Ctx, entry: Entry): HTMLElement {
+export function buildEntryChip(ctx: Ctx, entry: Entry, opts: { draggable?: boolean } = {}): HTMLElement {
   const cat = ctx.store.categoryOf(entry.categoryId);
   const chip = document.createElement("div");
   chip.className = "el-chip";
@@ -78,7 +78,7 @@ export function buildEntryChip(ctx: Ctx, entry: Entry): HTMLElement {
   const tipParts = [cat ? `类目：${cat.name}` : "无类别"];
   if (entry.dates) tipParts.push(`日期：${fmtDatesBadge(entry.dates)}`);
   if (entry.note) tipParts.push(entry.note);
-  tipParts.push("拖动可排序，或移到其他时间格");
+  if (opts.draggable !== false) tipParts.push("拖动可排序，或移到其他时间格");
   chip.title = tipParts.join("\n");
   chip.innerHTML = `
     <span class="el-chip__title">${esc(entry.title)}</span>
@@ -293,7 +293,7 @@ function hoistAddButton(cell: HTMLElement, box: HTMLElement): void {
   if (addButton) cell.appendChild(addButton);
 }
 
-function timeLabel(ctx: Ctx, p: PeriodRef, cls: string, text: string, sub?: string): HTMLElement {
+export function timeLabel(ctx: Ctx, p: PeriodRef, cls: string, text: string, sub?: string): HTMLElement {
   const label = document.createElement("span");
   label.className = cls + " el-tlabel";
   label.dataset.hpath = periodHPath(p);
@@ -311,6 +311,49 @@ function timeLabel(ctx: Ctx, p: PeriodRef, cls: string, text: string, sub?: stri
 export interface TimelineHandles {
   changeYear(delta: number): void;
   openSettings(): void;
+  toggleView(): void;
+}
+
+export interface NavItem {
+  label: string;
+  title: string;
+  action(): void;
+  icon?: boolean;
+}
+
+/** 面板左下角的导航按钮组：设置｜上一年｜下一年｜视图切换 */
+export function buildYearNav(year: number, handles: TimelineHandles, toggle: { icon: string; title: string }): HTMLElement {
+  const nav = document.createElement("div");
+  nav.className = "el-year-nav";
+  const items: NavItem[] = [
+    {
+      label: '<svg aria-hidden="true"><use xlink:href="#iconSettings"></use></svg>',
+      title: "设置（S）",
+      action: handles.openSettings,
+      icon: true
+    },
+    { label: "←", title: `上一年（${year - 1}）`, action: () => handles.changeYear(-1) },
+    { label: "→", title: `下一年（${year + 1}）`, action: () => handles.changeYear(1) },
+    {
+      label: `<svg aria-hidden="true"><use xlink:href="#${toggle.icon}"></use></svg>`,
+      title: toggle.title,
+      action: handles.toggleView,
+      icon: true
+    }
+  ];
+  for (const item of items) {
+    const button = document.createElement("button");
+    button.type = "button";
+    if (item.icon) button.innerHTML = item.label;
+    else button.textContent = item.label;
+    button.title = item.title;
+    button.addEventListener("click", (event) => {
+      event.stopPropagation();
+      item.action();
+    });
+    nav.appendChild(button);
+  }
+  return nav;
 }
 
 export function renderTimeline(container: HTMLElement, ctx: Ctx, year: number, handles: TimelineHandles): void {
@@ -327,7 +370,7 @@ export function renderTimeline(container: HTMLElement, ctx: Ctx, year: number, h
 
   const byKey = new Map<string, Entry[]>();
   for (const e of store.data.entries) {
-    if (e.period.year !== year) continue;
+    if (e.dayOnly || e.period.year !== year) continue;
     const key = periodKey(e.period);
     if (!byKey.has(key)) byKey.set(key, []);
     byKey.get(key)!.push(e);
@@ -366,30 +409,7 @@ export function renderTimeline(container: HTMLElement, ctx: Ctx, year: number, h
   const yearChips = chipsBox(ctx, entriesAt(yp), yp, "year");
   yearCell.appendChild(yearChips);
   hoistAddButton(yearCell, yearChips);
-  const yearNav = document.createElement("div");
-  yearNav.className = "el-year-nav";
-  for (const item of [
-    { label: "←", title: `上一年（${year - 1}）`, action: () => handles.changeYear(-1) },
-    {
-      label: '<svg aria-hidden="true"><use xlink:href="#iconSettings"></use></svg>',
-      title: "设置（S）",
-      action: handles.openSettings,
-      icon: true
-    },
-    { label: "→", title: `下一年（${year + 1}）`, action: () => handles.changeYear(1) }
-  ]) {
-    const button = document.createElement("button");
-    button.type = "button";
-    if (item.icon) button.innerHTML = item.label;
-    else button.textContent = item.label;
-    button.title = item.title;
-    button.addEventListener("click", (event) => {
-      event.stopPropagation();
-      item.action();
-    });
-    yearNav.appendChild(button);
-  }
-  yearCell.appendChild(yearNav);
+  yearCell.appendChild(buildYearNav(year, handles, { icon: "iconCalendar", title: "日期面板（D）" }));
   fixed.appendChild(yearCell);
 
   for (let q = 1; q <= 4; q++) {

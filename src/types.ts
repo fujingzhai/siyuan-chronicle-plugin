@@ -30,6 +30,8 @@ export interface Entry {
   note: string;
   /** 具体发生日期（可选），如旅行的实际起止日 */
   dates?: { start: string; end?: string };
+  /** 仅属于日期面板的活动：必有 dates，不出现在时间视图 */
+  dayOnly?: boolean;
   /** 同一时间格内的手动排序序号 */
   order?: number;
   /** 旧版遗留字段，不再使用 */

@@ -1,10 +1,13 @@
+import { defaultDateOfYear, renderDatePanel } from "./datepanel";
 import { Ctx, openEntryDialog, openSettingsDialog } from "./dialogs";
 import { refreshTimeDocs, renderTimeline } from "./timeline";
-import { currentPeriod, periodKey, weekMonth } from "./time";
+import { currentPeriod, periodKey, toISODate, weekMonth } from "./time";
 import { PeriodRef } from "./types";
 
 export class ChronicleApp {
   private timeYear = new Date().getFullYear();
+  private view: "time" | "date" = "time";
+  private pendingDateLocate: string | null = null;
   private unsub: (() => void) | null = null;
   private body!: HTMLElement;
   private main: HTMLElement | null = null;
@@ -68,27 +71,51 @@ export class ChronicleApp {
       this.locateToday();
     } else if (key === "n") {
       event.preventDefault();
-      openEntryDialog(this.ctx, { presetPeriod: currentPeriod("week") });
+      if (this.view === "date") {
+        openEntryDialog(this.ctx, { dayMode: true, presetDate: defaultDateOfYear(this.timeYear) });
+      } else {
+        openEntryDialog(this.ctx, { presetPeriod: currentPeriod("week") });
+      }
     } else if (key === "s") {
       event.preventDefault();
       openSettingsDialog(this.ctx);
+    } else if (key === "d") {
+      event.preventDefault();
+      this.setView("date");
+    } else if (key === "w") {
+      event.preventDefault();
+      this.setView("time");
     } else if (event.key === "ArrowLeft" || event.key === "ArrowRight") {
       event.preventDefault();
       this.changeTimeYear(event.key === "ArrowLeft" ? -1 : 1);
     }
   };
 
+  private setView(view: "time" | "date"): void {
+    if (this.view === view) return;
+    this.view = view;
+    this.main = null;
+    const todayWeek = currentPeriod("week");
+    if (view === "date") {
+      this.pendingDateLocate = this.timeYear === new Date().getFullYear() ? toISODate(new Date()) : null;
+    } else {
+      this.pendingLocate = this.timeYear === todayWeek.year ? todayWeek : null;
+    }
+    this.render();
+  }
+
   private changeTimeYear(delta: number): void {
     this.timeYear += delta;
     const todayWeek = currentPeriod("week");
     this.pendingLocate = this.timeYear === todayWeek.year ? todayWeek : null;
+    this.pendingDateLocate = this.timeYear === new Date().getFullYear() ? toISODate(new Date()) : null;
     this.main = null;
     this.render();
   }
 
   refreshDocuments(): void {
     if (!this.root.isConnected || this.root.offsetParent === null) return;
-    const container = this.root.querySelector<HTMLElement>(".el-timewrap");
+    const container = this.root.querySelector<HTMLElement>(".el-timewrap, .el-datewrap");
     if (container) void refreshTimeDocs(container, this.ctx, this.timeYear);
   }
 
@@ -96,6 +123,7 @@ export class ChronicleApp {
     const todayWeek = currentPeriod("week");
     this.timeYear = todayWeek.year;
     this.pendingLocate = todayWeek;
+    this.pendingDateLocate = toISODate(new Date());
     this.render();
   }
 
@@ -148,20 +176,49 @@ export class ChronicleApp {
 
     const layout = document.createElement("div");
     layout.className = "el-body";
-    const timeWrap = document.createElement("div");
-    layout.appendChild(timeWrap);
+    const wrap = document.createElement("div");
+    layout.appendChild(wrap);
     this.body.appendChild(layout);
-    renderTimeline(timeWrap, this.ctx, this.timeYear, {
-      changeYear: (delta) => this.changeTimeYear(delta),
-      openSettings: () => openSettingsDialog(this.ctx)
-    });
-    this.main = timeWrap.querySelector<HTMLElement>(".el-weeks");
+    const handles = {
+      changeYear: (delta: number) => this.changeTimeYear(delta),
+      openSettings: () => openSettingsDialog(this.ctx),
+      toggleView: () => this.setView(this.view === "time" ? "date" : "time")
+    };
+
+    if (this.view === "date") {
+      renderDatePanel(wrap, this.ctx, this.timeYear, handles);
+      this.main = wrap.querySelector<HTMLElement>(".el-date-months");
+      if (this.pendingDateLocate) {
+        this.scheduleDateLocate(wrap, this.pendingDateLocate);
+      } else if (this.main) {
+        this.main.scrollTop = prevScroll;
+      }
+      return;
+    }
+
+    renderTimeline(wrap, this.ctx, this.timeYear, handles);
+    this.main = wrap.querySelector<HTMLElement>(".el-weeks");
 
     if (this.pendingLocate) {
-      this.scheduleLocate(timeWrap, this.pendingLocate);
+      this.scheduleLocate(wrap, this.pendingLocate);
     } else if (this.main) {
       this.main.scrollTop = prevScroll;
     }
+  }
+
+  /** 日期视图定位到今天：滚动到当月并闪烁当天格子 */
+  private scheduleDateLocate(wrap: HTMLElement, iso: string): void {
+    this.locateRaf = window.requestAnimationFrame(() => {
+      this.locateRaf = 0;
+      const cell = wrap.querySelector<HTMLElement>(`[data-date="${iso}"]`);
+      const month = cell?.closest<HTMLElement>(".el-dmonth");
+      if (!cell || !month || !this.main) return;
+      const wanted = month.offsetTop - Math.max(0, (this.main.clientHeight - month.offsetHeight) / 2);
+      this.main.scrollTop = Math.max(0, Math.min(wanted, this.main.scrollHeight - this.main.clientHeight));
+      this.pendingDateLocate = null;
+      cell.classList.add("el-flash");
+      window.setTimeout(() => cell.classList.remove("el-flash"), 1200);
+    });
   }
 
 }

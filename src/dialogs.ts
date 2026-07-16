@@ -18,6 +18,7 @@ import {
   fmtMonthDay,
   maxNumOf,
   periodDateRange,
+  periodFromDate,
   samePeriod,
   toISODate,
   weekEnd,
@@ -107,9 +108,14 @@ function parseDateParts(
 
 // ---------------- 活动编辑 ----------------
 
-export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: PeriodRef }): void {
+export function openEntryDialog(
+  ctx: Ctx,
+  opts: { entry?: Entry; presetPeriod?: PeriodRef; dayMode?: boolean; presetDate?: string }
+): void {
   const { store } = ctx;
   const isNew = !opts.entry;
+  // 日期模式：隐藏周期选择，日期必填且跨全年填写；周期在保存时由开始日推得。
+  const dayMode = !!opts.dayMode || !!opts.entry?.dayOnly;
   const originalPeriod = opts.entry ? { ...opts.entry.period } : null;
   const originalCategoryId = opts.entry?.categoryId ?? null;
   const work: Entry = opts.entry
@@ -118,12 +124,16 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
         id: genId(),
         title: "",
         categoryId: store.data.categories[0]?.id ?? null,
-        period: opts.presetPeriod ? { ...opts.presetPeriod } : currentPeriod("week"),
+        period: dayMode && opts.presetDate
+          ? periodFromDate(opts.presetDate, "week") ?? currentPeriod("week")
+          : opts.presetPeriod ? { ...opts.presetPeriod } : currentPeriod("week"),
         docs: [],
         note: "",
+        ...(dayMode ? { dayOnly: true, ...(opts.presetDate ? { dates: { start: opts.presetDate } } : {}) } : {}),
         created: Date.now(),
         updated: Date.now()
       };
+  const dayYear = Number((work.dates?.start ?? opts.presetDate ?? toISODate(new Date())).slice(0, 4));
 
   const catOptions = store.data.categories
     .map((c) => `<option value="${c.id}" ${work.categoryId === c.id ? "selected" : ""}>${esc(c.name)}</option>`)
@@ -146,7 +156,7 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
         <option value="" ${work.categoryId ? "" : "selected"}>无类别</option>
       </select>
     </label>
-    <div class="el-form__row">
+    <div class="el-form__row"${dayMode ? ' style="display:none"' : ""}>
       <span class="el-form__label">时间</span>
       <div class="fn__flex fn__flex-1 el-period">
         <select class="b3-select" data-role="unit">
@@ -208,13 +218,19 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
   const dateEndMonth = $<HTMLInputElement>("date-end-month");
   const dateEndDay = $<HTMLInputElement>("date-end-day");
 
+  // 日期模式下不依赖周期：日期在整个公历年内自由填写。
+  const dateRange = () => dayMode
+    ? periodDateRange({ unit: "year", year: dayYear, num: 0 })
+    : periodDateRange(work.period);
+  const dateNeedsMonth = () => dayMode || work.period.unit === "year" || work.period.unit === "quarter";
+
   const rebuildDates = () => {
-    const range = periodDateRange(work.period);
+    const range = dateRange();
     const lo = toISODate(range.start);
     const hi = toISODate(range.end);
     const startValue = work.dates?.start && work.dates.start >= lo && work.dates.start <= hi ? work.dates.start : "";
     const endValue = work.dates?.end && work.dates.end >= lo && work.dates.end <= hi ? work.dates.end : "";
-    const needsMonth = work.period.unit === "year" || work.period.unit === "quarter";
+    const needsMonth = dateNeedsMonth();
     dateEditor.classList.toggle("el-date-editor--day-only", !needsMonth);
     const start = startValue ? dateParts(startValue) : { month: "", day: "" };
     const end = endValue ? dateParts(endValue) : { month: "", day: "" };
@@ -225,6 +241,10 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
   };
 
   const rebuildNums = () => {
+    if (dayMode) {
+      rebuildDates();
+      return;
+    }
     const unit = unitSel.value as Unit;
     const year = parseInt(yearInput.value, 10) || new Date().getFullYear();
     if (unit === "year") {
@@ -364,8 +384,8 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
     work.note = $<HTMLInputElement>("note").value.trim();
     if (originalPeriod && !samePeriod(originalPeriod, work.period)) delete work.order;
     delete work.done;
-    const range = periodDateRange(work.period);
-    const needsMonth = work.period.unit === "year" || work.period.unit === "quarter";
+    const range = dateRange();
+    const needsMonth = dateNeedsMonth();
     const start = parseDateParts(dateStartMonth.value, dateStartDay.value, range, needsMonth);
     const end = parseDateParts(dateEndMonth.value, dateEndDay.value, range, needsMonth);
     if (start === undefined || end === undefined) {
@@ -382,10 +402,19 @@ export function openEntryDialog(ctx: Ctx, opts: { entry?: Entry; presetPeriod?: 
       showMessage("结束日期不能早于开始日期", 3500, "info");
       return;
     }
+    if (dayMode && !start) {
+      showMessage("日期面板的活动必须填写日期", 3500, "info");
+      return;
+    }
     if (start) {
       work.dates = { start, ...(end ? { end } : {}) };
     } else {
       delete work.dates;
+    }
+    // 日期活动的周期由开始日所在周推得，仅用于排序等内部机制。
+    if (dayMode && start) {
+      work.dayOnly = true;
+      work.period = periodFromDate(start, "week") ?? work.period;
     }
     saving = true;
     saveButton.disabled = true;

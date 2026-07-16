@@ -283,6 +283,15 @@ export class Store {
       : a.created - b.created);
   }
 
+  /** 具体日期与某公历年有交集的活动（含仅日期面板的活动），按开始日排序 */
+  datedEntriesInYear(year: number): Entry[] {
+    const lo = `${year}-01-01`;
+    const hi = `${year}-12-31`;
+    return this.data.entries
+      .filter((e) => e.dates && e.dates.start <= hi && (e.dates.end || e.dates.start) >= lo)
+      .sort((a, b) => a.dates!.start.localeCompare(b.dates!.start) || a.created - b.created);
+  }
+
   entriesOfCategory(categoryId: string | null): Entry[] {
     return this.data.entries
       .filter((e) => e.categoryId === categoryId)
