@@ -452,6 +452,8 @@
 /* 悬停、拖选、今天的背景是数字后的小圆圈，不触及下方活动横线 */
 .el-dday__num {
   position: relative;
+  /* 建立层叠上下文，让 z-index:-1 的圆圈垫在数字后、而不是沉到面板背景之下 */
+  z-index: 0;
   flex: 1;
   display: flex;
   align-items: center;
