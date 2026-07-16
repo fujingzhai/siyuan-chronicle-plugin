@@ -384,18 +384,11 @@
   box-sizing: border-box;
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  /* 首行季度标题；三行月历卡均分剩余高度，空间不足时回落为可滚动 */
-  grid-template-rows: min-content repeat(3, minmax(min-content, 1fr));
+  /* 三行月历卡均分面板高度，空间不足时回落为可滚动 */
+  grid-template-rows: repeat(3, minmax(min-content, 1fr));
   grid-auto-flow: column;
   gap: 6px 20px;
   scrollbar-width: none;
-}
-
-.el-dquarter {
-  font-size: 14.5px;
-  font-weight: 700;
-  line-height: 24px;
-  padding-left: 8px;
 }
 
 .el-dmonths::-webkit-scrollbar {
@@ -439,7 +432,6 @@
   min-width: 0;
   min-height: 30px;
   box-sizing: border-box;
-  border-radius: 6px;
   display: flex;
   flex-direction: column;
   align-items: stretch;
@@ -451,32 +443,34 @@
   color: var(--b3-theme-on-surface);
   font-variant-numeric: tabular-nums;
   user-select: none;
-  transition: background 0.12s;
-}
-
-.el-dday:hover {
-  background: var(--b3-list-hover);
 }
 
 .el-dday--weekend {
   color: var(--b3-theme-on-surface-light);
 }
 
-.el-dday--today {
-  background: color-mix(in srgb, var(--b3-theme-on-background) 7%, transparent);
-  color: var(--b3-theme-primary);
-  font-weight: 700;
-}
-
-.el-dday--hl {
-  background: color-mix(in srgb, var(--b3-theme-primary) 13%, transparent);
-}
-
+/* 悬停、拖选、今天的背景都只罩住日期数字区域，不波及下方活动横线 */
 .el-dday__num {
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+  margin: 0 2px;
+  border-radius: 6px;
+  transition: background 0.12s;
+}
+
+.el-dday__num:hover {
+  background: var(--b3-list-hover);
+}
+
+.el-dday--today .el-dday__num {
+  background: color-mix(in srgb, var(--b3-theme-on-background) 7%, transparent);
+  font-weight: 700;
+}
+
+.el-dday--hl .el-dday__num {
+  background: color-mix(in srgb, var(--b3-theme-primary) 13%, transparent);
 }
 
 /* 活动横线：同一活动固定行号，跨天时线段越过格间缝相连 */

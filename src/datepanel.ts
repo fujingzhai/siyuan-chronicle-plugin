@@ -150,13 +150,7 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
     openEntryDialog(ctx, { dayMode: true, presetDate: lo, presetEnd: hi !== lo ? hi : undefined });
   };
 
-  for (let q = 1; q <= 4; q++) {
-    const quarter = document.createElement("div");
-    quarter.className = "el-dquarter";
-    quarter.textContent = `第 ${q} 季度`;
-    months.appendChild(quarter);
-
-    for (let m = (q - 1) * 3 + 1; m <= q * 3; m++) {
+  for (let m = 1; m <= 12; m++) {
       const { spans, laneCount } = assignLanes(
         entries
           .map((entry) => ({ entry, span: clampToMonth(entry, year, m) }))
@@ -252,7 +246,6 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
       }
       card.appendChild(cal);
       months.appendChild(card);
-    }
   }
 
   container.appendChild(months);
