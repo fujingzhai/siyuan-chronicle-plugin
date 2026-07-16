@@ -1,6 +1,6 @@
 {
   "name": "siyuan-chronicle-plugin",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "A time-first chronicle panel for SiYuan, organized by year, quarter, month, and week.",
   "author": "游夏",
   "license": "MIT",
