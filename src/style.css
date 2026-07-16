@@ -360,12 +360,19 @@
   100% { box-shadow: none; }
 }
 
-/* ---- 日期视图：左侧共用年份栏，右侧 12 张月历卡 ---- */
+/* ---- 日期视图：左侧共用年份栏，右侧 12 张月历卡（竖排：每列一季） ---- */
 .el-datewrap {
   flex: 1;
   min-width: 0;
   min-height: 0;
   display: flex;
+  position: relative;
+}
+
+/* 年份栏宽度按百分比设定，含内边距，保证与时间视图的网格列完全等宽 */
+.el-datewrap > .el-cell--year {
+  box-sizing: border-box;
+  flex: 0 0 auto;
 }
 
 .el-dmonths {
@@ -375,8 +382,10 @@
   overflow-y: auto;
   padding: 8px 18px 24px 14px;
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(216px, 1fr));
-  gap: 8px 20px;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-rows: repeat(3, auto);
+  grid-auto-flow: column;
+  gap: 6px 20px;
   align-content: start;
   scrollbar-width: none;
 }

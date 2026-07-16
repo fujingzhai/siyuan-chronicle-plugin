@@ -1,7 +1,7 @@
 import { Ctx, openEntryDialog } from "./dialogs";
 import { WEEKDAY_NAMES, daysInMonth, toISODate } from "./time";
 import { TimelineHandles, buildEntryChip, buildYearCell, refreshTimeDocs, timeLabel } from "./timeline";
-import { DEFAULT_TIME_COLS, Entry } from "./types";
+import { DEFAULT_TIME_COLS, Entry, Settings } from "./types";
 
 function pad2(n: number): string {
   return String(n).padStart(2, "0");
@@ -34,12 +34,44 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
   container.classList.add("el-datewrap");
 
   const yearCell = buildYearCell(ctx, year, handles, { icon: "iconClock", title: "时间面板（W）" });
-  const cols = store.data.settings.colsCustomized
+  container.appendChild(yearCell);
+
+  // 与时间视图完全一致的年份栏宽度，且同样可拖拽调整（联动时间视图的年/季列宽）。
+  const cols: Settings["cols"] & object = store.data.settings.colsCustomized
     ? { ...DEFAULT_TIME_COLS, ...(store.data.settings.cols ?? {}) }
     : { ...DEFAULT_TIME_COLS };
-  yearCell.style.width = `${(cols.y / (cols.y + cols.q + cols.m + cols.w)) * 100}%`;
-  yearCell.style.flex = "0 0 auto";
-  container.appendChild(yearCell);
+  const grip = document.createElement("div");
+  grip.className = "el-resize";
+  grip.title = "拖动调整列宽";
+  const applyWidth = () => {
+    const pct = (cols.y / (cols.y + cols.q + cols.m + cols.w)) * 100;
+    yearCell.style.width = `${pct}%`;
+    grip.style.left = `calc(${pct}% - 3px)`;
+  };
+  grip.addEventListener("mousedown", (e) => {
+    e.preventDefault();
+    // 先按面板实际像素校准，保证拖拽 1:1 跟手
+    const panelWidth = container.getBoundingClientRect().width;
+    const scale = panelWidth / (cols.y + cols.q + cols.m + cols.w);
+    (["y", "q", "m", "w"] as const).forEach((k) => { cols[k] *= scale; });
+    const startX = e.clientX;
+    const startY = cols.y;
+    const pairTotal = cols.y + cols.q;
+    const onMove = (ev: MouseEvent) => {
+      cols.y = Math.min(320, pairTotal - 92, Math.max(76, startY + ev.clientX - startX));
+      cols.q = pairTotal - cols.y;
+      applyWidth();
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      store.updateSettings({ cols: { ...cols }, colsCustomized: true });
+    };
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  });
+  container.appendChild(grip);
+  applyWidth();
 
   const now = new Date();
   const todayISO = toISODate(now);
