@@ -449,27 +449,41 @@
   color: var(--b3-theme-on-surface-light);
 }
 
-/* 悬停、拖选、今天的背景都只罩住日期数字区域，不波及下方活动横线 */
+/* 悬停、拖选、今天的背景是数字后的小圆圈，不触及下方活动横线 */
 .el-dday__num {
+  position: relative;
   flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 2px;
-  border-radius: 6px;
+}
+
+.el-dday__num::before {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 18px;
+  height: 18px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  z-index: -1;
   transition: background 0.12s;
 }
 
-.el-dday__num:hover {
+.el-dday__num:hover::before {
   background: var(--b3-list-hover);
 }
 
 .el-dday--today .el-dday__num {
-  background: color-mix(in srgb, var(--b3-theme-on-background) 7%, transparent);
   font-weight: 700;
 }
 
-.el-dday--hl .el-dday__num {
+.el-dday--today .el-dday__num::before {
+  background: color-mix(in srgb, var(--b3-theme-on-background) 8%, transparent);
+}
+
+.el-dday--hl .el-dday__num::before {
   background: color-mix(in srgb, var(--b3-theme-primary) 13%, transparent);
 }
 
@@ -484,8 +498,9 @@
 .el-dline {
   display: block;
   position: relative;
-  height: 3px;
-  border-radius: 2px;
+  height: 2px;
+  border-radius: 1px;
+  transition: transform 0.12s;
 }
 
 .el-dline--empty {
@@ -515,9 +530,9 @@
   border-bottom-right-radius: 0;
 }
 
+/* 悬停时整条横线适当变粗（缩放不影响布局） */
 .el-dline--hl {
-  filter: brightness(1.12);
-  box-shadow: 0 0 0 1.5px color-mix(in srgb, var(--b3-theme-on-background) 24%, transparent);
+  transform: scaleY(2);
 }
 
 /* ---- 活动卡片 ---- */
