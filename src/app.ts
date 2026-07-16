@@ -115,7 +115,7 @@ export class ChronicleApp {
 
   refreshDocuments(): void {
     if (!this.root.isConnected || this.root.offsetParent === null) return;
-    const container = this.root.querySelector<HTMLElement>(".el-timewrap, .el-datewrap");
+    const container = this.root.querySelector<HTMLElement>(".el-timewrap");
     if (container) void refreshTimeDocs(container, this.ctx, this.timeYear);
   }
 

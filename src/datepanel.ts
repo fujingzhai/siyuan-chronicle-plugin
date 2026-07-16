@@ -1,6 +1,6 @@
 import { Ctx, openEntryDialog } from "./dialogs";
-import { WEEKDAY_NAMES, daysInMonth, toISODate } from "./time";
-import { TimelineHandles, buildEntryChip, buildYearCell, refreshTimeDocs, timeLabel } from "./timeline";
+import { WEEKDAY_NAMES, daysInMonth, fmtDatesBadge, toISODate } from "./time";
+import { TimelineHandles, buildYearNav } from "./timeline";
 import { DEFAULT_TIME_COLS, Entry, Settings } from "./types";
 
 function pad2(n: number): string {
@@ -24,16 +24,49 @@ function clampToMonth(entry: Entry, year: number, month: number): { from: string
 /** 周一起始的月历表头 */
 const CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
 
+interface MonthSpan {
+  entry: Entry;
+  span: { from: string; to: string };
+  lane: number;
+}
+
+/** 同月内为活动分配横线行号：区间不重叠的活动复用同一行 */
+function assignLanes(items: { entry: Entry; span: { from: string; to: string } }[]): { spans: MonthSpan[]; laneCount: number } {
+  const sorted = items.slice().sort((a, b) =>
+    a.span.from.localeCompare(b.span.from) || a.span.to.localeCompare(b.span.to) || a.entry.created - b.entry.created
+  );
+  const laneEnds: string[] = [];
+  const spans: MonthSpan[] = [];
+  for (const item of sorted) {
+    let lane = laneEnds.findIndex((end) => end < item.span.from);
+    if (lane < 0) {
+      lane = laneEnds.length;
+      laneEnds.push(item.span.to);
+    } else {
+      laneEnds[lane] = item.span.to;
+    }
+    spans.push({ ...item, lane });
+  }
+  return { spans, laneCount: laneEnds.length };
+}
+
 /**
- * 日期视图：左侧沿用时间视图的年份栏，右侧为日历式年视图——
- * 12 张月历卡，各自下方平铺当月带日期的活动卡片。
+ * 日期视图：左侧与时间视图等宽的年份栏（纯年份＋导航），右侧月历按季竖排。
+ * 活动以类目色横线画在所涉日期下方，跨天相连；在日期上按下并拖动可创建多天活动。
  */
 export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, handles: TimelineHandles): void {
   const { store } = ctx;
   container.innerHTML = "";
   container.classList.add("el-datewrap");
 
-  const yearCell = buildYearCell(ctx, year, handles, { icon: "iconClock", title: "时间面板（W）" });
+  // 年份栏：日期面板保持纯粹，不放时间笔记入口和无日期的活动
+  const yearCell = document.createElement("div");
+  yearCell.className = "el-cell el-cell--year";
+  const yearLabel = document.createElement("span");
+  yearLabel.className = "el-ylabel";
+  yearLabel.textContent = `${year} 年`;
+  yearCell.appendChild(yearLabel);
+  yearCell.appendChild(buildYearNav(year, handles, { icon: "iconChronicle", title: "时间面板（W）" }));
   container.appendChild(yearCell);
 
   // 与时间视图完全一致的年份栏宽度，且同样可拖拽调整（联动时间视图的年/季列宽）。
@@ -50,7 +83,6 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
   };
   grip.addEventListener("mousedown", (e) => {
     e.preventDefault();
-    // 先按面板实际像素校准，保证拖拽 1:1 跟手
     const panelWidth = container.getBoundingClientRect().width;
     const scale = panelWidth / (cols.y + cols.q + cols.m + cols.w);
     (["y", "q", "m", "w"] as const).forEach((k) => { cols[k] *= scale; });
@@ -80,92 +112,150 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
   const months = document.createElement("div");
   months.className = "el-dmonths";
 
-  for (let m = 1; m <= 12; m++) {
-    const monthEntries = entries
-      .map((entry) => ({ entry, span: clampToMonth(entry, year, m) }))
-      .filter((item): item is { entry: Entry; span: { from: string; to: string } } => !!item.span);
-
-    // 每天覆盖到的活动，用于圆点与悬停提示
-    const byDay = new Map<string, Entry[]>();
-    for (const { entry, span } of monthEntries) {
-      for (let d = Number(span.from.slice(8)); d <= Number(span.to.slice(8)); d++) {
-        const iso = isoOf(year, m, d);
-        if (!byDay.has(iso)) byDay.set(iso, []);
-        byDay.get(iso)!.push(entry);
-      }
-    }
-
-    const isCurrentMonth = year === now.getFullYear() && m === now.getMonth() + 1;
-    const card = document.createElement("div");
-    card.className = "el-dmonth" + (isCurrentMonth ? " el-dmonth--current" : "");
-    card.appendChild(timeLabel(ctx, { unit: "month", year, num: m }, "el-dmonth__label", `${m} 月`));
-
-    const cal = document.createElement("div");
-    cal.className = "el-dcal";
-    for (let i = 0; i < 7; i++) {
-      const wd = document.createElement("span");
-      wd.className = "el-dcal__wd" + (i >= 5 ? " el-dcal__wd--weekend" : "");
-      wd.textContent = CAL_WEEKDAYS[i];
-      cal.appendChild(wd);
-    }
-    // 周一起始：1 号前补空位
-    const lead = (new Date(year, m - 1, 1).getDay() + 6) % 7;
-    for (let i = 0; i < lead; i++) cal.appendChild(document.createElement("span"));
-
-    const dim = daysInMonth(year, m);
-    for (let d = 1; d <= dim; d++) {
-      const iso = isoOf(year, m, d);
-      const weekday = new Date(year, m - 1, d).getDay();
-      const dayEntries = byDay.get(iso) ?? [];
-      const cell = document.createElement("div");
-      cell.className = "el-dday"
-        + (weekday === 0 || weekday === 6 ? " el-dday--weekend" : "")
-        + (iso === todayISO ? " el-dday--today" : "");
-      cell.dataset.date = iso;
-      const dots = dayEntries.slice(0, 3).map((entry) => {
-        const color = store.categoryOf(entry.categoryId)?.color ?? "var(--b3-theme-on-surface-light)";
-        return `<i style="background:${color}"></i>`;
-      }).join("");
-      cell.innerHTML = `<span class="el-dday__num">${d}</span><span class="el-dday__dots">${dots}</span>`;
-      const tip = [`${m}/${d} 周${WEEKDAY_NAMES[weekday]}`];
-      for (const entry of dayEntries) tip.push(`· ${entry.title}`);
-      cell.title = tip.join("\n");
-      cell.addEventListener("click", () => openEntryDialog(ctx, { dayMode: true, presetDate: iso }));
-      cal.appendChild(cell);
-    }
-    card.appendChild(cal);
-
-    const chips = document.createElement("div");
-    chips.className = "el-dmonth__chips";
-    for (const { entry, span } of monthEntries) {
-      const chip = buildEntryChip(ctx, entry, { draggable: false });
-      // 悬停活动卡片时点亮它覆盖的日期格
-      chip.addEventListener("mouseenter", () => {
-        for (let d = Number(span.from.slice(8)); d <= Number(span.to.slice(8)); d++) {
-          cal.querySelector(`[data-date="${isoOf(year, m, d)}"]`)?.classList.add("el-dday--hl");
-        }
-      });
-      chip.addEventListener("mouseleave", () => {
-        cal.querySelectorAll(".el-dday--hl").forEach((el) => el.classList.remove("el-dday--hl"));
-      });
-      chips.appendChild(chip);
-    }
-    const addBtn = document.createElement("button");
-    addBtn.className = "el-chips__add";
-    addBtn.title = "记录活动";
-    addBtn.textContent = "＋";
-    addBtn.addEventListener("click", () => {
-      const preset = isCurrentMonth ? todayISO : isoOf(year, m, 1);
-      openEntryDialog(ctx, { dayMode: true, presetDate: preset });
+  // ---- 拖选创建：在日期上按下，拖到另一天，松开即按起止日创建 ----
+  let selStart: string | null = null;
+  let selEnd: string | null = null;
+  const clearSelection = () => months.querySelectorAll(".el-dday--hl").forEach((el) => el.classList.remove("el-dday--hl"));
+  const applySelection = () => {
+    clearSelection();
+    if (!selStart || !selEnd) return;
+    const [lo, hi] = selStart <= selEnd ? [selStart, selEnd] : [selEnd, selStart];
+    months.querySelectorAll<HTMLElement>(".el-dday").forEach((el) => {
+      const d = el.dataset.date!;
+      if (d >= lo && d <= hi) el.classList.add("el-dday--hl");
     });
-    chips.appendChild(addBtn);
-    card.appendChild(chips);
+  };
+  const cancelSelect = () => {
+    selStart = null;
+    selEnd = null;
+    clearSelection();
+    document.removeEventListener("mousemove", onSelectMove, true);
+    document.removeEventListener("mouseup", onSelectUp, true);
+    window.removeEventListener("blur", cancelSelect);
+  };
+  const onSelectMove = (event: MouseEvent) => {
+    if (!selStart) return;
+    event.preventDefault();
+    const hit = document.elementFromPoint(event.clientX, event.clientY) as HTMLElement | null;
+    const cell = hit?.closest<HTMLElement>(".el-dday");
+    if (cell?.dataset.date) {
+      selEnd = cell.dataset.date;
+      applySelection();
+    }
+  };
+  const onSelectUp = () => {
+    if (!selStart) return;
+    const [lo, hi] = !selEnd || selStart <= selEnd ? [selStart, selEnd ?? selStart] : [selEnd, selStart];
+    cancelSelect();
+    openEntryDialog(ctx, { dayMode: true, presetDate: lo, presetEnd: hi !== lo ? hi : undefined });
+  };
 
-    months.appendChild(card);
+  for (let q = 1; q <= 4; q++) {
+    const quarter = document.createElement("div");
+    quarter.className = "el-dquarter";
+    quarter.textContent = `第 ${q} 季度`;
+    months.appendChild(quarter);
+
+    for (let m = (q - 1) * 3 + 1; m <= q * 3; m++) {
+      const { spans, laneCount } = assignLanes(
+        entries
+          .map((entry) => ({ entry, span: clampToMonth(entry, year, m) }))
+          .filter((item): item is { entry: Entry; span: { from: string; to: string } } => !!item.span)
+      );
+
+      const card = document.createElement("div");
+      card.className = "el-dmonth";
+      const label = document.createElement("span");
+      label.className = "el-dmonth__label";
+      label.textContent = `${m} 月`;
+      card.appendChild(label);
+
+      const cal = document.createElement("div");
+      cal.className = "el-dcal";
+      for (let i = 0; i < 7; i++) {
+        const wd = document.createElement("span");
+        wd.className = "el-dcal__wd" + (i >= 5 ? " el-dcal__wd--weekend" : "");
+        wd.textContent = CAL_WEEKDAYS[i];
+        cal.appendChild(wd);
+      }
+      const lead = (new Date(year, m - 1, 1).getDay() + 6) % 7;
+      for (let i = 0; i < lead; i++) cal.appendChild(document.createElement("span"));
+
+      const dim = daysInMonth(year, m);
+      for (let d = 1; d <= dim; d++) {
+        const iso = isoOf(year, m, d);
+        const weekday = new Date(year, m - 1, d).getDay();
+        const cell = document.createElement("div");
+        cell.className = "el-dday"
+          + (weekday === 0 || weekday === 6 ? " el-dday--weekend" : "")
+          + (iso === todayISO ? " el-dday--today" : "");
+        cell.dataset.date = iso;
+        cell.title = `${m}/${d} 周${WEEKDAY_NAMES[weekday]}`;
+        const num = document.createElement("span");
+        num.className = "el-dday__num";
+        num.textContent = String(d);
+        cell.appendChild(num);
+
+        // 活动横线：同一活动固定行号，跨天时相邻线段相连
+        if (laneCount) {
+          const lanes = document.createElement("span");
+          lanes.className = "el-dday__lanes";
+          const covering = new Map<number, MonthSpan>();
+          for (const s of spans) {
+            if (iso >= s.span.from && iso <= s.span.to) covering.set(s.lane, s);
+          }
+          for (let lane = 0; lane < laneCount; lane++) {
+            const s = covering.get(lane);
+            if (!s) {
+              const gap = document.createElement("i");
+              gap.className = "el-dline el-dline--empty";
+              lanes.appendChild(gap);
+              continue;
+            }
+            const seg = document.createElement("i");
+            seg.className = "el-dline"
+              + (iso > s.span.from ? " el-dline--pre" : "")
+              + (iso < s.span.to ? " el-dline--post" : "");
+            const color = store.categoryOf(s.entry.categoryId)?.color ?? "var(--b3-theme-on-surface-light)";
+            seg.style.background = color;
+            seg.dataset.entryId = s.entry.id;
+            const cat = store.categoryOf(s.entry.categoryId);
+            seg.title = `${s.entry.title}\n${fmtDatesBadge(s.entry.dates!)}　${cat ? cat.name : "无类别"}`;
+            seg.addEventListener("mousedown", (e) => e.stopPropagation());
+            seg.addEventListener("click", (e) => {
+              e.stopPropagation();
+              openEntryDialog(ctx, { entry: s.entry });
+            });
+            seg.addEventListener("mouseenter", () => {
+              months.querySelectorAll<HTMLElement>(`[data-entry-id="${s.entry.id}"]`)
+                .forEach((el) => el.classList.add("el-dline--hl"));
+            });
+            seg.addEventListener("mouseleave", () => {
+              months.querySelectorAll(".el-dline--hl").forEach((el) => el.classList.remove("el-dline--hl"));
+            });
+            lanes.appendChild(seg);
+          }
+          cell.appendChild(lanes);
+        }
+
+        cell.addEventListener("mousedown", (event) => {
+          if (event.button !== 0 || (event.target as HTMLElement).closest(".el-dline:not(.el-dline--empty)")) return;
+          event.preventDefault();
+          selStart = iso;
+          selEnd = iso;
+          applySelection();
+          document.addEventListener("mousemove", onSelectMove, true);
+          document.addEventListener("mouseup", onSelectUp, true);
+          window.addEventListener("blur", cancelSelect);
+        });
+        cal.appendChild(cell);
+      }
+      card.appendChild(cal);
+      months.appendChild(card);
+    }
   }
 
   container.appendChild(months);
-  void refreshTimeDocs(container, ctx, year);
 }
 
 /** 供快捷键 N 使用：日期面板下新建活动的默认日期 */

@@ -70,7 +70,7 @@ export async function refreshTimeDocs(container: HTMLElement, ctx: Ctx, year: nu
   }
 }
 
-export function buildEntryChip(ctx: Ctx, entry: Entry, opts: { draggable?: boolean } = {}): HTMLElement {
+export function buildEntryChip(ctx: Ctx, entry: Entry): HTMLElement {
   const cat = ctx.store.categoryOf(entry.categoryId);
   const chip = document.createElement("div");
   chip.className = "el-chip";
@@ -78,7 +78,7 @@ export function buildEntryChip(ctx: Ctx, entry: Entry, opts: { draggable?: boole
   const tipParts = [cat ? `类目：${cat.name}` : "无类别"];
   if (entry.dates) tipParts.push(`日期：${fmtDatesBadge(entry.dates)}`);
   if (entry.note) tipParts.push(entry.note);
-  if (opts.draggable !== false) tipParts.push("拖动可排序，或移到其他时间格");
+  tipParts.push("拖动可排序，或移到其他时间格");
   chip.title = tipParts.join("\n");
   chip.innerHTML = `
     <span class="el-chip__title">${esc(entry.title)}</span>

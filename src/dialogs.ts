@@ -110,7 +110,7 @@ function parseDateParts(
 
 export function openEntryDialog(
   ctx: Ctx,
-  opts: { entry?: Entry; presetPeriod?: PeriodRef; dayMode?: boolean; presetDate?: string }
+  opts: { entry?: Entry; presetPeriod?: PeriodRef; dayMode?: boolean; presetDate?: string; presetEnd?: string }
 ): void {
   const { store } = ctx;
   const isNew = !opts.entry;
@@ -129,7 +129,19 @@ export function openEntryDialog(
           : opts.presetPeriod ? { ...opts.presetPeriod } : currentPeriod("week"),
         docs: [],
         note: "",
-        ...(dayMode ? { dayOnly: true, ...(opts.presetDate ? { dates: { start: opts.presetDate } } : {}) } : {}),
+        ...(dayMode
+          ? {
+              dayOnly: true,
+              ...(opts.presetDate
+                ? {
+                    dates: {
+                      start: opts.presetDate,
+                      ...(opts.presetEnd && opts.presetEnd !== opts.presetDate ? { end: opts.presetEnd } : {})
+                    }
+                  }
+                : {})
+            }
+          : {}),
         created: Date.now(),
         updated: Date.now()
       };
