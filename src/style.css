@@ -465,8 +465,9 @@
   position: absolute;
   left: 50%;
   top: 50%;
-  width: 18px;
-  height: 18px;
+  /* 圆圈随数字区高度自适应，最大 22px，不会侵入下方横线区 */
+  height: min(22px, 100%);
+  aspect-ratio: 1;
   transform: translate(-50%, -50%);
   border-radius: 50%;
   z-index: -1;
@@ -534,7 +535,7 @@
 
 /* 悬停时整条横线适当变粗（缩放不影响布局） */
 .el-dline--hl {
-  transform: scaleY(2);
+  transform: scaleY(1.5);
 }
 
 /* ---- 活动卡片 ---- */
