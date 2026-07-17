@@ -22,6 +22,7 @@ function emptyData(): LedgerData {
     entries: [],
     settings: {
       notebook: "",
+      lockMessage: "",
       notebookCustomized: false,
       managedNotebooks: [],
       cols: { ...DEFAULT_TIME_COLS },

@@ -24,7 +24,7 @@ import {
   weekEnd,
   weekStart
 } from "./time";
-import { Entry, PeriodRef, Unit } from "./types";
+import { DEFAULT_LOCK_MESSAGE, Entry, PeriodRef, Unit } from "./types";
 
 export interface Ctx {
   app: App;
@@ -723,6 +723,11 @@ export function openSettingsDialog(ctx: Ctx): void {
       <select class="b3-select fn__flex-1" data-role="notebook"><option value="">加载中…</option></select>
     </label>
     <div class="el-form__hint">更换默认笔记本时，既有的时间笔记树和由岁时记创建的活动笔记会自动迁移；若目标存在同路径文档，将中止切换并提示处理。</div>
+    <label class="el-form__row">
+      <span class="el-form__label">锁屏文案</span>
+      <input class="b3-text-field fn__flex-1" data-role="lock-message" maxlength="80">
+    </label>
+    <div class="el-form__hint">留空则使用默认文案“${DEFAULT_LOCK_MESSAGE}”；锁定页不会显示任何解锁提示。</div>
     </div>
   </div>
   <div class="el-settings__section" data-role="category-editor">
@@ -742,6 +747,9 @@ export function openSettingsDialog(ctx: Ctx): void {
   });
 
   const notebookSel = dialog.element.querySelector('[data-role="notebook"]') as HTMLSelectElement;
+  const lockMessageInput = dialog.element.querySelector('[data-role="lock-message"]') as HTMLInputElement;
+  lockMessageInput.value = store.data.settings.lockMessage ?? "";
+  lockMessageInput.placeholder = DEFAULT_LOCK_MESSAGE;
   mountCategoryEditor(ctx, dialog.element.querySelector('[data-role="category-editor"]') as HTMLElement);
   void lsNotebooks()
     .then((books) => {
@@ -774,6 +782,7 @@ export function openSettingsDialog(ctx: Ctx): void {
       const result = await migrateChronicleDocuments(store, targetNotebook);
       store.updateSettings({
         notebook: targetNotebook,
+        lockMessage: lockMessageInput.value.trim(),
         notebookCustomized: selectedNotebookName !== DEFAULT_NOTEBOOK_NAME,
         managedNotebooks: [targetNotebook]
       });

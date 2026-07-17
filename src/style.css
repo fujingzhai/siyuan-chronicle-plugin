@@ -33,51 +33,13 @@
   text-align: center;
 }
 
-.el-lockscreen__icon {
-  width: 30px;
-  height: 30px;
-  margin-bottom: 12px;
-  fill: currentColor;
-  opacity: 0.72;
-}
-
-.el-lockscreen__title {
+.el-lockscreen__message {
+  max-width: min(80%, 560px);
   font-size: 16px;
-  font-weight: 650;
-}
-
-.el-lockscreen__hint {
-  margin-top: 6px;
+  font-weight: 400;
+  line-height: 1.8;
+  letter-spacing: 0.12em;
   color: var(--b3-theme-on-surface-light);
-  font-size: 12px;
-}
-
-.el-lockscreen__button {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  margin-top: 16px;
-  padding: 6px 12px;
-  border: 1px solid var(--b3-border-color);
-  border-radius: 7px;
-  background: transparent;
-  color: var(--b3-theme-on-surface);
-  cursor: pointer;
-  font: inherit;
-  font-size: 13px;
-}
-
-.el-lockscreen__button:hover,
-.el-lockscreen__button:focus-visible {
-  border-color: var(--b3-theme-primary);
-  color: var(--b3-theme-primary);
-  outline: none;
-}
-
-.el-lockscreen__button svg {
-  width: 14px;
-  height: 14px;
-  fill: currentColor;
 }
 
 /* ---- 主体布局 ---- */

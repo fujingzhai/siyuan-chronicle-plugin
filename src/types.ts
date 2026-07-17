@@ -43,6 +43,8 @@ export interface Entry {
 export interface Settings {
   /** 新建笔记所在笔记本 id */
   notebook: string;
+  /** 临时锁定面板时显示的自定义封面文案；留空使用默认文案 */
+  lockMessage?: string;
   /** 用户是否明确选择了非默认名称的笔记本 */
   notebookCustomized?: boolean;
   /** 岁时记曾使用过、尚待迁移清理的笔记本 id */
@@ -67,3 +69,6 @@ export interface LedgerData {
 
 /** 时间视图的协调默认列宽；拖拽后的用户设置会覆盖它。 */
 export const DEFAULT_TIME_COLS = { y: 160, q: 160, m: 480, w: 800 };
+
+/** 临时锁屏的默认封面文案。 */
+export const DEFAULT_LOCK_MESSAGE = "此间清寂，且候归人。";

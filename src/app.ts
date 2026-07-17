@@ -2,7 +2,7 @@ import { defaultDateOfYear, renderDatePanel } from "./datepanel";
 import { Ctx, openEntryDialog, openSettingsDialog } from "./dialogs";
 import { refreshTimeDocs, renderTimeline } from "./timeline";
 import { currentPeriod, periodKey, toISODate, weekMonth } from "./time";
-import { PeriodRef } from "./types";
+import { DEFAULT_LOCK_MESSAGE, PeriodRef } from "./types";
 
 export class ChronicleApp {
   private timeYear = new Date().getFullYear();
@@ -126,19 +126,13 @@ export class ChronicleApp {
     if (this.locked) {
       const lockscreen = document.createElement("div");
       lockscreen.className = "el-lockscreen";
-      lockscreen.setAttribute("role", "status");
-      lockscreen.innerHTML = `
-        <svg class="el-lockscreen__icon" aria-hidden="true"><use xlink:href="#iconLock"></use></svg>
-        <div class="el-lockscreen__title">面板已锁定</div>
-        <div class="el-lockscreen__hint">按 L 或点击下方按钮解锁</div>
-        <button type="button" class="el-lockscreen__button">
-          <svg aria-hidden="true"><use xlink:href="#iconUnlock"></use></svg>
-          解锁面板
-        </button>`;
-      lockscreen.querySelector("button")!.addEventListener("click", this.toggleLock);
+      const message = document.createElement("div");
+      message.className = "el-lockscreen__message";
+      message.textContent = this.ctx.store.data.settings.lockMessage?.trim() || DEFAULT_LOCK_MESSAGE;
+      lockscreen.appendChild(message);
       this.root.appendChild(lockscreen);
       this.lockscreen = lockscreen;
-      requestAnimationFrame(() => lockscreen.querySelector("button")?.focus({ preventScroll: true }));
+      requestAnimationFrame(() => this.root.focus({ preventScroll: true }));
       return;
     }
 
