@@ -414,9 +414,9 @@
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  /* 表头行固定，日期行随卡片高度拉伸 */
+  /* 表头行固定；日期内容占用固定高度，网格剩余空间只负责均匀排布 */
   grid-template-rows: 16px;
-  grid-auto-rows: minmax(30px, 1fr);
+  grid-auto-rows: minmax(32px, 1fr);
   gap: 2px;
 }
 
@@ -430,13 +430,13 @@
 
 .el-dday {
   min-width: 0;
-  min-height: 30px;
+  min-height: 32px;
   box-sizing: border-box;
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  justify-content: flex-end;
-  padding: 2px 0 3px;
+  display: grid;
+  grid-template-rows: 22px 8px;
+  row-gap: 1px;
+  align-content: start;
+  padding: 1px 0 0;
   cursor: pointer;
   font-size: 11.5px;
   line-height: 1;
@@ -454,7 +454,6 @@
   position: relative;
   /* 建立层叠上下文，让 z-index:-1 的圆圈垫在数字后、而不是沉到面板背景之下 */
   z-index: 0;
-  flex: 1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -494,14 +493,19 @@
 .el-dday__lanes {
   display: flex;
   flex-direction: column;
-  gap: 2px;
-  padding: 1px 3px 0;
+  gap: var(--el-dline-gap, 1px);
+  height: 8px;
+  min-height: 8px;
+  box-sizing: border-box;
+  padding: 0 3px;
 }
 
 .el-dline {
   display: block;
   position: relative;
-  height: 2px;
+  height: var(--el-dline-height, 2px);
+  min-height: 0;
+  flex: 0 0 var(--el-dline-height, 2px);
   border-radius: 1px;
   transition: transform 0.12s;
 }

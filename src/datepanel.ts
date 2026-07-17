@@ -194,6 +194,12 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
         if (laneCount) {
           const lanes = document.createElement("span");
           lanes.className = "el-dday__lanes";
+          // 活动始终压进固定的 8px 轨道：三条以内保持 2px 线宽，更多时等比压缩，
+          // 不再让事件数量参与日期格和月份卡片的高度计算。
+          const laneGap = laneCount <= 3 ? 1 : 0;
+          const laneHeight = Math.min(2, 8 / laneCount);
+          lanes.style.setProperty("--el-dline-gap", `${laneGap}px`);
+          lanes.style.setProperty("--el-dline-height", `${laneHeight}px`);
           const covering = new Map<number, MonthSpan>();
           for (const s of spans) {
             if (iso >= s.span.from && iso <= s.span.to) covering.set(s.lane, s);
