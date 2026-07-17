@@ -10,6 +10,13 @@ interface DocRow {
   ial: string;
 }
 
+/**
+ * 新建文档后，思源的 ws 通知可能早于 SQL 索引可见性。只有连续多次查询都找不到
+ * 同一文档时才确认引用失效，避免刚完成的绑定被一次瞬时空结果清掉。
+ */
+const MISSING_DOC_CONFIRMATIONS = 3;
+const missingDocChecks = new Map<string, number>();
+
 export interface DocumentMigrationResult {
   sources: number;
   movedTimeRoots: number;
@@ -24,8 +31,12 @@ function sqlString(value: string): string {
  * 核对活动绑定文档是否仍存在，只移除失效引用，绝不删除活动。
  */
 export async function reconcileBoundEntries(store: Store): Promise<{ removedEntries: number; removedRefs: number; renamedRefs: number }> {
-  const ids = Array.from(new Set(store.data.entries.flatMap((entry) => entry.docs.map((doc) => doc.id))));
-  if (!ids.length) return { removedEntries: 0, removedRefs: 0, renamedRefs: 0 };
+  const refs = store.data.entries.flatMap((entry) => entry.docs);
+  const ids = Array.from(new Set(refs.map((doc) => doc.id)));
+  if (!ids.length) {
+    missingDocChecks.clear();
+    return { removedEntries: 0, removedRefs: 0, renamedRefs: 0 };
+  }
 
   const existing = new Map<string, string>();
   for (let offset = 0; offset < ids.length; offset += 128) {
@@ -34,6 +45,26 @@ export async function reconcileBoundEntries(store: Store): Promise<{ removedEntr
       `SELECT id, content FROM blocks WHERE type = 'd' AND id IN (${chunk.map(sqlString).join(",")})`
     );
     rows.forEach((row) => existing.set(row.id, row.content));
+  }
+
+  const knownTitles = new Map(refs.map((doc) => [doc.id, doc.title]));
+  const referenced = new Set(ids);
+  for (const id of ids) {
+    if (existing.has(id)) {
+      missingDocChecks.delete(id);
+      continue;
+    }
+    const misses = (missingDocChecks.get(id) ?? 0) + 1;
+    if (misses < MISSING_DOC_CONFIRMATIONS) {
+      missingDocChecks.set(id, misses);
+      // 暂时按原题名保留；后续查询真正命中时再同步最新题名。
+      existing.set(id, knownTitles.get(id) ?? "");
+    } else {
+      missingDocChecks.delete(id);
+    }
+  }
+  for (const id of Array.from(missingDocChecks.keys())) {
+    if (!referenced.has(id)) missingDocChecks.delete(id);
   }
   return store.reconcileBoundDocs(existing);
 }
