@@ -535,7 +535,7 @@
 
 /* 悬停时整条横线适当变粗（缩放不影响布局） */
 .el-dline--hl {
-  transform: scaleY(1.5);
+  transform: scaleY(1.2);
 }
 
 /* ---- 活动卡片 ---- */
