@@ -10,11 +10,12 @@ Chronicle also looks ahead: unlike calendars and to-do panels organized around d
 
 ## Features
 
-- View year, quarter, month, and week in one annual panel, move continuously between years, or locate today.
-- Record an activity's title, category, time period, exact dates, and note.
+- View years, quarters, months, and weeks in the timeline panel, move continuously between years, or locate today.
+- Browse the full year in the date panel; category-colored lines appear below dates and support single-day or multi-day activities.
+- Record an activity's title, category, time period, exact dates, and note; both panels share activities and categories.
 - Reorder activities by dragging or move them into another time period.
 - Create notes from time nodes and link one or more existing notes to an activity.
-- Customize categories and the default notebook to build your own record system.
+- Customize categories, the default notebook, and the panel-lock message; use the lock button or `L` to temporarily cover the panel.
 
 ## Notes and notebooks
 
@@ -25,8 +26,10 @@ When the default notebook changes, Chronicle migrates only notes it created and 
 ## Shortcuts
 
 - `T`: locate today
-- `N`: create an activity
+- `N`: create an activity in the current panel
 - `S`: open settings
+- `D` / `W`: switch to the date panel / timeline panel
+- `L`: lock or unlock the panel
 - `←` / `→`: change year
 
 Shortcuts work only while the Chronicle panel is visible and no text field or dialog is being edited.
