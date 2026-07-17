@@ -71,4 +71,4 @@ export interface LedgerData {
 export const DEFAULT_TIME_COLS = { y: 160, q: 160, m: 480, w: 800 };
 
 /** 临时锁屏的默认封面文案。 */
-export const DEFAULT_LOCK_MESSAGE = "此间清寂，且候归人。";
+export const DEFAULT_LOCK_MESSAGE = "四海为量，千载为心";
