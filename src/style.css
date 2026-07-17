@@ -484,9 +484,9 @@
   flex: 1;
   display: grid;
   grid-template-columns: repeat(7, minmax(0, 1fr));
-  /* 日期行固定 31px；剩余高度在首尾和行间均匀分配，末行保留完整活动轨道。 */
+  /* 日期行至少 38px，宽松布局时均匀拉伸；事件数不参与尺寸计算。 */
   grid-template-rows: 16px;
-  grid-auto-rows: 31px;
+  grid-auto-rows: minmax(38px, 1fr);
   align-content: space-evenly;
   gap: 2px;
 }
@@ -501,11 +501,11 @@
 
 .el-dday {
   min-width: 0;
-  min-height: 31px;
+  min-height: 38px;
   box-sizing: border-box;
   display: grid;
-  grid-template-rows: 22px 8px;
-  row-gap: 1px;
+  grid-template-rows: 22px minmax(16px, 1fr);
+  row-gap: 0;
   align-content: start;
   padding: 0;
   cursor: pointer;
@@ -564,9 +564,10 @@
 .el-dday__lanes {
   display: flex;
   flex-direction: column;
-  gap: var(--el-dline-gap, 1px);
-  height: 8px;
-  min-height: 8px;
+  justify-content: var(--el-lane-justify, flex-start);
+  gap: 0;
+  height: auto;
+  min-height: 16px;
   box-sizing: border-box;
   padding: 0 3px;
 }
@@ -574,10 +575,22 @@
 .el-dline {
   display: block;
   position: relative;
-  height: var(--el-dline-height, 2px);
+  height: var(--el-dline-slot, 6px);
   min-height: 0;
-  flex: 0 0 var(--el-dline-height, 2px);
+  flex: 0 0 var(--el-dline-slot, 6px);
+}
+
+/* 槽位本身负责命中，2px 彩色线只负责显示。 */
+.el-dline::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
   border-radius: 1px;
+  background: var(--el-dline-color, var(--b3-theme-on-surface-light));
   transition: transform 0.12s;
 }
 
@@ -585,32 +598,32 @@
   visibility: hidden;
 }
 
-/* 3px 太细不好点，用伪元素扩大命中区域 */
+/* 每个活动占据完整槽位，鼠标无需精确点中 2px 彩色线。 */
 .el-dline:not(.el-dline--empty) {
   cursor: pointer;
 }
 
-.el-dline:not(.el-dline--empty)::after {
-  content: "";
-  position: absolute;
-  inset: -3px 0;
-}
-
 .el-dline--pre {
   margin-left: -4px;
+}
+
+.el-dline--pre::before {
   border-top-left-radius: 0;
   border-bottom-left-radius: 0;
 }
 
 .el-dline--post {
   margin-right: -4px;
+}
+
+.el-dline--post::before {
   border-top-right-radius: 0;
   border-bottom-right-radius: 0;
 }
 
 /* 悬停时整条横线适当变粗（缩放不影响布局） */
-.el-dline--hl {
-  transform: scaleY(1.2);
+.el-dline--hl::before {
+  transform: translateY(-50%) scaleY(1.2);
 }
 
 /* ---- 活动卡片 ---- */

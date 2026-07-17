@@ -23,6 +23,8 @@ function clampToMonth(entry: Entry, year: number, month: number): { from: string
 
 /** 周一起始的月历表头 */
 const CAL_WEEKDAYS = ["一", "二", "三", "四", "五", "六", "日"];
+const DATE_LANE_BAND_HEIGHT = 16;
+const DATE_LANE_SLOT_MAX = 6;
 
 interface MonthSpan {
   entry: Entry;
@@ -194,12 +196,11 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
         if (laneCount) {
           const lanes = document.createElement("span");
           lanes.className = "el-dday__lanes";
-          // 活动始终压进固定的 8px 轨道：三条以内保持 2px 线宽，更多时等比压缩，
-          // 不再让事件数量参与日期格和月份卡片的高度计算。
-          const laneGap = laneCount <= 3 ? 1 : 0;
-          const laneHeight = Math.min(2, 8 / laneCount);
-          lanes.style.setProperty("--el-dline-gap", `${laneGap}px`);
-          lanes.style.setProperty("--el-dline-height", `${laneHeight}px`);
+          // 活动始终占用固定轨道，不参与日期格尺寸计算；每条活动获得独立点击槽，
+          // 三条时至少均分 16px；宽松布局下，两条以上会在日期下方的剩余空间内等距排开。
+          const laneSlot = Math.min(DATE_LANE_SLOT_MAX, DATE_LANE_BAND_HEIGHT / laneCount);
+          lanes.style.setProperty("--el-dline-slot", `${laneSlot}px`);
+          lanes.style.setProperty("--el-lane-justify", laneCount > 1 ? "space-evenly" : "flex-start");
           const covering = new Map<number, MonthSpan>();
           for (const s of spans) {
             if (iso >= s.span.from && iso <= s.span.to) covering.set(s.lane, s);
@@ -217,7 +218,7 @@ export function renderDatePanel(container: HTMLElement, ctx: Ctx, year: number, 
               + (iso > s.span.from ? " el-dline--pre" : "")
               + (iso < s.span.to ? " el-dline--post" : "");
             const color = store.categoryOf(s.entry.categoryId)?.color ?? "var(--b3-theme-on-surface-light)";
-            seg.style.background = color;
+            seg.style.setProperty("--el-dline-color", color);
             seg.dataset.entryId = s.entry.id;
             const cat = store.categoryOf(s.entry.categoryId);
             seg.title = `${s.entry.title}\n${fmtDatesBadge(s.entry.dates!)}　${cat ? cat.name : "无类别"}`;
