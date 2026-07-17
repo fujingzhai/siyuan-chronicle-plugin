@@ -15,6 +15,8 @@ export class ChronicleApp {
   private locateObserver: ResizeObserver | null = null;
   private locateRaf = 0;
   private timeDocTimer = 0;
+  private locked = false;
+  private lockscreen: HTMLElement | null = null;
 
   constructor(private root: HTMLElement, private ctx: Ctx) {}
 
@@ -44,6 +46,9 @@ export class ChronicleApp {
     this.root.removeEventListener("pointerdown", this.focusPanel);
     window.clearInterval(this.timeDocTimer);
     this.cancelLocate();
+    this.lockscreen?.remove();
+    this.lockscreen = null;
+    this.root.classList.remove("el-root--locked");
   }
 
   private focusPanel = (event: PointerEvent): void => {
@@ -65,6 +70,14 @@ export class ChronicleApp {
 
     const key = event.key.toLowerCase();
     if (event.metaKey || event.ctrlKey || event.altKey || event.shiftKey) return;
+
+    if (key === "l") {
+      if (event.repeat) return;
+      event.preventDefault();
+      this.toggleLock();
+      return;
+    }
+    if (this.locked) return;
 
     if (key === "t") {
       event.preventDefault();
@@ -103,6 +116,36 @@ export class ChronicleApp {
     }
     this.render();
   }
+
+  /** 临时 UI 锁：只存在于当前面板实例，不写入设置，解锁后保留原视图状态。 */
+  private toggleLock = (): void => {
+    this.locked = !this.locked;
+    this.root.classList.toggle("el-root--locked", this.locked);
+    this.body.setAttribute("aria-hidden", this.locked ? "true" : "false");
+
+    if (this.locked) {
+      const lockscreen = document.createElement("div");
+      lockscreen.className = "el-lockscreen";
+      lockscreen.setAttribute("role", "status");
+      lockscreen.innerHTML = `
+        <svg class="el-lockscreen__icon" aria-hidden="true"><use xlink:href="#iconLock"></use></svg>
+        <div class="el-lockscreen__title">面板已锁定</div>
+        <div class="el-lockscreen__hint">按 L 或点击下方按钮解锁</div>
+        <button type="button" class="el-lockscreen__button">
+          <svg aria-hidden="true"><use xlink:href="#iconUnlock"></use></svg>
+          解锁面板
+        </button>`;
+      lockscreen.querySelector("button")!.addEventListener("click", this.toggleLock);
+      this.root.appendChild(lockscreen);
+      this.lockscreen = lockscreen;
+      requestAnimationFrame(() => lockscreen.querySelector("button")?.focus({ preventScroll: true }));
+      return;
+    }
+
+    this.lockscreen?.remove();
+    this.lockscreen = null;
+    requestAnimationFrame(() => this.root.focus({ preventScroll: true }));
+  };
 
   private changeTimeYear(delta: number): void {
     this.timeYear += delta;
@@ -182,6 +225,7 @@ export class ChronicleApp {
     const handles = {
       changeYear: (delta: number) => this.changeTimeYear(delta),
       openSettings: () => openSettingsDialog(this.ctx),
+      toggleLock: this.toggleLock,
       toggleView: () => this.setView(this.view === "time" ? "date" : "time")
     };
 

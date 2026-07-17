@@ -311,6 +311,7 @@ export function timeLabel(ctx: Ctx, p: PeriodRef, cls: string, text: string, sub
 export interface TimelineHandles {
   changeYear(delta: number): void;
   openSettings(): void;
+  toggleLock(): void;
   toggleView(): void;
 }
 
@@ -347,6 +348,12 @@ export function buildYearNav(year: number, handles: TimelineHandles, toggle: { i
       label: '<svg aria-hidden="true"><use xlink:href="#iconSettings"></use></svg>',
       title: "设置（S）",
       action: handles.openSettings,
+      icon: true
+    },
+    {
+      label: '<svg aria-hidden="true"><use xlink:href="#iconLock"></use></svg>',
+      title: "锁定面板（L）",
+      action: handles.toggleLock,
       icon: true
     },
     { label: "←", title: `上一年（${year - 1}）`, action: () => handles.changeYear(-1) },
