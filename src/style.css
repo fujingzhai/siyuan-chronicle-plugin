@@ -518,6 +518,16 @@
   background: color-mix(in srgb, var(--b3-theme-on-background) 8%, transparent);
 }
 
+/* 日期定位只让数字后的圆圈闪烁，避免复用时间轴的整格方形高亮 */
+.el-dday--flash .el-dday__num::before {
+  animation: el-dday-flash 1.2s ease-out;
+}
+
+@keyframes el-dday-flash {
+  0% { box-shadow: inset 0 0 0 999px var(--b3-list-hover); }
+  100% { box-shadow: none; }
+}
+
 .el-dday--hl .el-dday__num::before {
   background: color-mix(in srgb, var(--b3-theme-primary) 13%, transparent);
 }

@@ -254,8 +254,8 @@ export class ChronicleApp {
       const wanted = month.offsetTop - Math.max(0, (this.main.clientHeight - month.offsetHeight) / 2);
       this.main.scrollTop = Math.max(0, Math.min(wanted, this.main.scrollHeight - this.main.clientHeight));
       this.pendingDateLocate = null;
-      cell.classList.add("el-flash");
-      window.setTimeout(() => cell.classList.remove("el-flash"), 1200);
+      cell.classList.add("el-dday--flash");
+      window.setTimeout(() => cell.classList.remove("el-dday--flash"), 1200);
     });
   }
 
