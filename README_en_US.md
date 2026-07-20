@@ -46,9 +46,23 @@ pnpm make-install
 
 MIT
 
-## Statement
+## Support Development — Buy me a token
 
 This plugin was developed entirely through vibe coding:
 
 - Claude Code (Fable 5): approximately 30%
 - Codex (GPT 5.6 Sol): approximately 70%
+
+(The figures above are estimates from the plugin's first release; it keeps being updated, always with the most capable models available at the time.)
+
+Top-tier models are expensive and my study schedule is tight, so this work has not come easily. If you like this plugin or benefit from it, you are warmly invited to support its development. I will keep updating it and making the experience better.
+
+Please leave your LianDi (ld246) username or any other social account with your payment, and I will add you to the plugin's sponsor list as a token of my gratitude. Your support is my greatest motivation to create!
+
+| ![WeChat Pay](https://fastly.jsdelivr.net/gh/fujingzhai/siyuan-chronicle-plugin@main/assets/sponsor-wechat.png) | ![Alipay](https://fastly.jsdelivr.net/gh/fujingzhai/siyuan-chronicle-plugin@main/assets/sponsor-alipay.jpg) |
+| :---: | :---: |
+
+## Sponsors
+
+- [youxia](https://ld246.com/member/youxia)
+

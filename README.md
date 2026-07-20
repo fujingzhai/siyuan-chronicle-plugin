@@ -46,12 +46,25 @@ pnpm make-install
 
 MIT
 
-## 声明
+## 支持开发——Buy me a token
 
 本插件完全通过 vibe coding 开发：
 
 - Claude Code（Fable 5）：约 30%
 - Codex（GPT 5.6 Sol）：约 70%
+
+（以上为插件初版发布时的预估，后续不断更新，始终选用了更新时刻所能用到的顶尖模型）
+
+顶尖模型价格昂贵，个人学业时间安排紧张，创作不易，如果您喜欢或受益于本插件，欢迎您支持插件的开发。我会持续更新，让体验越来越好。
+
+请备注您的链滴账户名或其他任何社交账户，我会将您列入插件赞助名单，以表感激。您的支持是我创作的最大动力！
+
+| ![微信支付](https://fastly.jsdelivr.net/gh/fujingzhai/siyuan-chronicle-plugin@main/assets/sponsor-wechat.png) | ![支付宝](https://fastly.jsdelivr.net/gh/fujingzhai/siyuan-chronicle-plugin@main/assets/sponsor-alipay.jpg) |
+| :---: | :---: |
+
+## 赞助者
+
+- [youxia](https://ld246.com/member/youxia)
 
 ## 讨论
 
